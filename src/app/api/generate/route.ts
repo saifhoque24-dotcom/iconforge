@@ -16,8 +16,9 @@ export async function POST(req: Request) {
 
         const ai = new GoogleGenAI({ apiKey });
 
+        // Use Gemini 2.0 Flash Experimental which supports image generation
         const response = await ai.models.generateImages({
-            model: 'imagen-3.0-generate-002',
+            model: 'gemini-2.0-flash-exp',
             prompt: `A professional, high-quality vector icon of ${prompt}. Flat design, minimal, solid colors, white background.`,
             config: {
                 numberOfImages: 1,
