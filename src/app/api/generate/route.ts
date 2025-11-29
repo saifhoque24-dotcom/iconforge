@@ -33,9 +33,9 @@ Style: Modern, clean, minimalist vector icon with smooth edges and perfect symme
                 Format: Square aspect ratio, suitable for app stores and websites.
                     Details: Polished, premium quality, production - ready icon design.`;
 
-        // Use FLUX.1-schnell (free and fast)
+        // Use SDXL for higher quality
         const response = await client.textToImage({
-            model: 'black-forest-labs/FLUX.1-schnell',
+            model: 'stabilityai/stable-diffusion-xl-base-1.0',
             inputs: enhancedPrompt,
         });
 
