@@ -21,6 +21,8 @@ export default function Home() {
     const [credits, setCredits] = useState(0);
     const [showPricing, setShowPricing] = useState(false);
     const [hasEmail, setHasEmail] = useState(false);
+    const [icons, setIcons] = useState<any[]>([]);
+    const [showGallery, setShowGallery] = useState(false);
 
     useEffect(() => {
         // Load Revolut Checkout SDK
@@ -49,6 +51,36 @@ export default function Home() {
             setCredits(data.credits || 0);
         } catch (err) {
             console.error('Failed to fetch credits:', err);
+        }
+    };
+
+    const fetchIcons = async () => {
+        try {
+            const res = await fetch(`/api/icons?email=${encodeURIComponent(email)}`);
+            const data = await res.json();
+            setIcons(data.icons || []);
+        } catch (err) {
+            console.error('Failed to fetch icons:', err);
+        }
+    };
+
+    const downloadIcon = (imageData: string, prompt: string) => {
+        const link = document.createElement('a');
+        link.href = `data:image/png;base64,${imageData}`;
+        link.download = `${prompt.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
+        link.click();
+    };
+
+    const deleteIconHandler = async (iconId: number) => {
+        try {
+            await fetch('/api/icons', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ iconId, email }),
+            });
+            fetchIcons();
+        } catch (err) {
+            console.error('Failed to delete icon:', err);
         }
     };
 
@@ -98,7 +130,7 @@ export default function Home() {
             const res = await fetch('/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt }),
+                body: JSON.stringify({ prompt, email }),
             });
 
             const data = await res.json();
@@ -109,6 +141,7 @@ export default function Home() {
             }
 
             setImage(data.image);
+            fetchIcons(); // Refresh gallery
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -242,7 +275,73 @@ export default function Home() {
                     <div className="flex justify-center">
                         <IconDisplay image={image} loading={loading} />
                     </div>
+
+                    {image && (
+                        <div className="flex justify-center mt-4">
+                            <button
+                                onClick={() => downloadIcon(image, prompt)}
+                                className="bg-black text-white px-6 py-3 rounded-xl font-medium hover:bg-gray-800 transition-all"
+                            >
+                                Download Icon
+                            </button>
+                        </div>
+                    )}
                 </div>
+
+                {/* Gallery Toggle */}
+                <div className="mt-16 flex justify-center gap-4">
+                    <button
+                        onClick={() => { setShowGallery(false); }}
+                        className={`px-6 py-3 rounded-xl font-medium transition-all ${!showGallery ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                    >
+                        Generate
+                    </button>
+                    <button
+                        onClick={() => { setShowGallery(true); fetchIcons(); }}
+                        className={`px-6 py-3 rounded-xl font-medium transition-all ${showGallery ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                    >
+                        My Icons ({icons.length})
+                    </button>
+                </div>
+
+                {/* Gallery View */}
+                {showGallery && (
+                    <div className="mt-12">
+                        <h2 className="text-2xl font-bold mb-6">Your Icon Gallery</h2>
+                        {icons.length === 0 ? (
+                            <div className="text-center text-gray-500 py-12">
+                                No icons yet. Generate your first icon to get started!
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {icons.map((icon: any) => (
+                                    <div key={icon.id} className="group relative bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-gray-300 transition-all">
+                                        <img
+                                            src={`data:image/png;base64,${icon.image_data}`}
+                                            alt={icon.prompt}
+                                            className="w-full aspect-square object-contain mb-2"
+                                        />
+                                        <p className="text-xs text-gray-500 truncate mb-2">{icon.prompt}</p>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => downloadIcon(icon.image_data, icon.prompt)}
+                                                className="flex-1 bg-black text-white text-xs px-3 py-2 rounded-lg hover:bg-gray-800 transition-all"
+                                            >
+                                                Download
+                                            </button>
+                                            <button
+                                                onClick={() => deleteIconHandler(icon.id)}
+                                                className="bg-red-100 text-red-600 text-xs px-3 py-2 rounded-lg hover:bg-red-200 transition-all"
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                     <div className="p-6 rounded-2xl bg-gray-50 border border-gray-100">

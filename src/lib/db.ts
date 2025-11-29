@@ -47,6 +47,15 @@ async function initDB() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `;
+    await sql`
+      CREATE TABLE IF NOT EXISTS icons (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        prompt TEXT NOT NULL,
+        image_data TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
 
     // Run migration after tables exist
     await migrate();
@@ -139,6 +148,33 @@ export async function completeTransaction(revolutOrderId: string) {
     UPDATE transactions 
     SET status = 'completed', completed_at = CURRENT_TIMESTAMP
     WHERE revolut_order_id = ${revolutOrderId}
+    RETURNING *
+  `;
+  return result.rows[0];
+}
+
+export async function saveIcon(userId: number, prompt: string, imageData: string) {
+  const result = await sql`
+    INSERT INTO icons (user_id, prompt, image_data)
+    VALUES (${userId}, ${prompt}, ${imageData})
+    RETURNING *
+  `;
+  return result.rows[0];
+}
+
+export async function getUserIcons(userId: number) {
+  const result = await sql`
+    SELECT * FROM icons 
+    WHERE user_id = ${userId}
+    ORDER BY created_at DESC
+  `;
+  return result.rows;
+}
+
+export async function deleteIcon(iconId: number, userId: number) {
+  const result = await sql`
+    DELETE FROM icons 
+    WHERE id = ${iconId} AND user_id = ${userId}
     RETURNING *
   `;
   return result.rows[0];

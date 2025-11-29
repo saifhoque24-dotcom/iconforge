@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server';
 import { InferenceClient } from '@huggingface/inference';
+import { getUserByEmail, saveIcon } from '@/lib/db';
 
 export async function POST(req: Request) {
     try {
-        const { prompt } = await req.json();
+        const { prompt, email } = await req.json();
 
         if (!prompt) {
             return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
+        }
+
+        if (!email) {
+            return NextResponse.json({ error: 'Email is required' }, { status: 400 });
         }
 
         const apiKey = process.env.HUGGINGFACE_API_KEY?.trim();
@@ -25,6 +30,12 @@ export async function POST(req: Request) {
         // The SDK returns a Blob
         const buffer = await (response as unknown as Blob).arrayBuffer();
         const base64Image = Buffer.from(buffer).toString('base64');
+
+        // Save to database
+        const user = await getUserByEmail(email);
+        if (user) {
+            await saveIcon(user.id, prompt, base64Image);
+        }
 
         return NextResponse.json({ image: base64Image });
     } catch (error: any) {
