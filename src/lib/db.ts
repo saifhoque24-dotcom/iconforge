@@ -73,7 +73,7 @@ export async function getOrCreateUser(email: string) {
 async function createUserInternal(email: string) {
   const result = await sql`
     INSERT INTO users (email, credits)
-    VALUES (${email}, 5)
+    VALUES (${email}, CAST(5 AS INTEGER))
     ON CONFLICT (email) 
     DO UPDATE SET updated_at = CURRENT_TIMESTAMP
     RETURNING *
