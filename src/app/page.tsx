@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowRight, Zap, Download, Shield, Star, CheckCircle } from 'lucide-react';
 import IconDisplay from '@/components/IconDisplay';
 import CreditBalance from '@/components/CreditBalance';
 import PricingModal from '@/components/PricingModal';
@@ -355,20 +355,115 @@ export default function Home() {
                 )}
 
                 <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-                    <div className="p-6 rounded-2xl bg-gray-50 border border-gray-100">
-                        <h3 className="font-bold mb-2">High Quality</h3>
-                        <p className="text-sm text-gray-500">1024x1024 resolution PNGs ready for production.</p>
+                    <div className="p-6 rounded-2xl bg-gray-50 border border-gray-100 hover:border-gray-200 transition-all">
+                        <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                            <Zap size={24} />
+                        </div>
+                        <h3 className="font-bold mb-2 text-lg">Lightning Fast</h3>
+                        <p className="text-sm text-gray-500">Generate professional icons in seconds. No waiting for designers.</p>
                     </div>
-                    <div className="p-6 rounded-2xl bg-gray-50 border border-gray-100">
-                        <h3 className="font-bold mb-2">Commercial Use</h3>
-                        <p className="text-sm text-gray-500">Own the assets you generate completely.</p>
+                    <div className="p-6 rounded-2xl bg-gray-50 border border-gray-100 hover:border-gray-200 transition-all">
+                        <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                            <Shield size={24} />
+                        </div>
+                        <h3 className="font-bold mb-2 text-lg">Commercial Rights</h3>
+                        <p className="text-sm text-gray-500">You own every icon you generate. Use them in any project, royalty-free.</p>
                     </div>
-                    <div className="p-6 rounded-2xl bg-gray-50 border border-gray-100">
-                        <h3 className="font-bold mb-2">Instant</h3>
-                        <p className="text-sm text-gray-500">No waiting. Get your icons in seconds.</p>
+                    <div className="p-6 rounded-2xl bg-gray-50 border border-gray-100 hover:border-gray-200 transition-all">
+                        <div className="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                            <Download size={24} />
+                        </div>
+                        <h3 className="font-bold mb-2 text-lg">Production Ready</h3>
+                        <p className="text-sm text-gray-500">High-resolution PNGs with transparent backgrounds, ready to ship.</p>
+                    </div>
+                </div>
+
+                {/* How it Works */}
+                <div className="mt-32 text-center">
+                    <h2 className="text-3xl font-bold mb-12">How it Works</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+                        {/* Connecting Line (Desktop) */}
+                        <div className="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -z-10 transform -translate-y-1/2"></div>
+
+                        <div className="bg-white p-6">
+                            <div className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">1</div>
+                            <h3 className="font-bold mb-2">Describe</h3>
+                            <p className="text-sm text-gray-500">Simply type what you need, e.g., "blue rocket"</p>
+                        </div>
+                        <div className="bg-white p-6">
+                            <div className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">2</div>
+                            <h3 className="font-bold mb-2">Generate</h3>
+                            <p className="text-sm text-gray-500">Our AI creates unique, professional options instantly</p>
+                        </div>
+                        <div className="bg-white p-6">
+                            <div className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">3</div>
+                            <h3 className="font-bold mb-2">Download</h3>
+                            <p className="text-sm text-gray-500">Save your favorites and use them immediately</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Testimonials */}
+                <div className="mt-32 mb-20">
+                    <h2 className="text-3xl font-bold mb-12 text-center">Loved by Creators</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="p-8 rounded-2xl bg-gray-50 border border-gray-100">
+                            <div className="flex gap-1 text-yellow-400 mb-4">
+                                <Star fill="currentColor" size={16} />
+                                <Star fill="currentColor" size={16} />
+                                <Star fill="currentColor" size={16} />
+                                <Star fill="currentColor" size={16} />
+                                <Star fill="currentColor" size={16} />
+                            </div>
+                            <p className="text-gray-600 mb-6">"IconForge saved me hundreds of dollars on my latest app. The icons look exactly like I hired a professional designer."</p>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-500">JD</div>
+                                <div>
+                                    <div className="font-bold text-sm">John Doe</div>
+                                    <div className="text-xs text-gray-500">Indie Developer</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-8 rounded-2xl bg-gray-50 border border-gray-100">
+                            <div className="flex gap-1 text-yellow-400 mb-4">
+                                <Star fill="currentColor" size={16} />
+                                <Star fill="currentColor" size={16} />
+                                <Star fill="currentColor" size={16} />
+                                <Star fill="currentColor" size={16} />
+                                <Star fill="currentColor" size={16} />
+                            </div>
+                            <p className="text-gray-600 mb-6">"Finally an icon generator that actually understands simple prompts. The clean style is perfect for modern UI."</p>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-500">AS</div>
+                                <div>
+                                    <div className="font-bold text-sm">Sarah Smith</div>
+                                    <div className="text-xs text-gray-500">Product Designer</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            {/* Footer */}
+            <footer className="border-t border-gray-100 py-12 bg-gray-50">
+                <div className="max-w-4xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
+                        <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white">
+                            <Sparkles size={16} />
+                        </div>
+                        IconForge
+                    </div>
+                    <div className="text-sm text-gray-500">
+                        © 2024 IconForge. All rights reserved.
+                    </div>
+                    <div className="flex gap-6 text-sm text-gray-500">
+                        <a href="#" className="hover:text-black transition-colors">Terms</a>
+                        <a href="#" className="hover:text-black transition-colors">Privacy</a>
+                        <a href="#" className="hover:text-black transition-colors">Contact</a>
+                    </div>
+                </div>
+            </footer>
 
             <PricingModal
                 isOpen={showPricing}
