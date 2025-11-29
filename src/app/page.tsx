@@ -23,6 +23,7 @@ export default function Home() {
     const [hasEmail, setHasEmail] = useState(false);
     const [icons, setIcons] = useState<any[]>([]);
     const [showGallery, setShowGallery] = useState(false);
+    const [selectedStyle, setSelectedStyle] = useState('modern');
 
     useEffect(() => {
         // Load Revolut Checkout SDK
@@ -130,7 +131,7 @@ export default function Home() {
             const res = await fetch('/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt, email }),
+                body: JSON.stringify({ prompt, email, style: selectedStyle }),
             });
 
             const data = await res.json();
@@ -244,6 +245,33 @@ export default function Home() {
                 </div>
 
                 <div className="max-w-xl mx-auto">
+                    {/* Style Selector */}
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium mb-3 text-gray-700">Choose Style</label>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                            {[
+                                { id: 'modern', label: 'Modern', emoji: '✨' },
+                                { id: 'flat', label: 'Flat', emoji: '🎨' },
+                                { id: '3d', label: '3D', emoji: '🎭' },
+                                { id: 'gradient', label: 'Gradient', emoji: '🌈' },
+                                { id: 'minimal', label: 'Minimal', emoji: '⚪' },
+                            ].map((style) => (
+                                <button
+                                    key={style.id}
+                                    type="button"
+                                    onClick={() => setSelectedStyle(style.id)}
+                                    className={`p-3 rounded-xl border-2 transition-all text-sm font-medium ${selectedStyle === style.id
+                                            ? 'border-black bg-black text-white'
+                                            : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                                        }`}
+                                >
+                                    <span className="block text-lg mb-1">{style.emoji}</span>
+                                    {style.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     <form onSubmit={generateIcon} className="relative mb-8 group">
                         <input
                             type="text"
