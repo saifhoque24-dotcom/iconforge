@@ -92,17 +92,36 @@ Details: Polished, premium quality, production-ready icon design.`;
                     });
                 } catch (lightningError) {
                     console.error('Lightning failed, trying OpenJourney:', lightningError);
-                    // Priority 4: OpenJourney (Midjourney style - Reliable)
-                    response = await client.textToImage({
-                        model: 'prompthero/openjourney',
-                        inputs: enhancedPrompt,
-                    });
+                    try {
+                        // Priority 4: OpenJourney (Midjourney style - Reliable)
+                        response = await client.textToImage({
+                            model: 'prompthero/openjourney',
+                            inputs: enhancedPrompt,
+                        });
+                    } catch (ojError) {
+                        console.error('OpenJourney failed, using Pollinations.ai (Nuclear Option):', ojError);
+                        // Priority 5: Pollinations.ai (Guaranteed Fallback)
+                        // This API is free, unlimited, and doesn't use HF Inference Client
+                        const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}`;
+                        const pollRes = await fetch(pollinationsUrl);
+                        if (!pollRes.ok) throw new Error('Pollinations.ai failed');
+                        const pollBuffer = await pollRes.arrayBuffer();
+                        // Mock the response object expected by the next step
+                        response = new Blob([pollBuffer]);
+                    }
                 }
             }
         }
 
-        // The SDK returns a Blob
-        const buffer = await (response as unknown as Blob).arrayBuffer();
+        // Handle both HF response (Blob) and Pollinations response (Blob)
+        let buffer;
+        if (response instanceof Blob) {
+            buffer = await response.arrayBuffer();
+        } else {
+            // HF Inference Client returns a specific object that acts like a Blob but might need casting
+            buffer = await (response as unknown as Blob).arrayBuffer();
+        }
+
         const base64Image = Buffer.from(buffer).toString('base64');
 
         // Save to database
