@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
 
 export async function POST(req: Request) {
     try {
@@ -9,27 +8,37 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
         }
 
-        const apiKey = process.env.OPENAI_API_KEY;
+        const apiKey = process.env.HUGGINGFACE_API_KEY;
         if (!apiKey) {
-            return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 });
+            return NextResponse.json({ error: 'Hugging Face API key not configured' }, { status: 500 });
         }
 
-        const openai = new OpenAI({ apiKey });
+        // Use Stable Diffusion via Hugging Face Inference API (FREE!)
+        const response = await fetch(
+            'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1',
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    inputs: `professional vector icon of ${prompt}, flat design, minimal, solid colors, white background, simple clean icon style`,
+                }),
+            }
+        );
 
-        const response = await openai.images.generate({
-            model: 'dall-e-3',
-            prompt: `A professional, high-quality vector icon of ${prompt}. Flat design, minimal, solid colors, white background, simple and clean.`,
-            n: 1,
-            size: '1024x1024',
-            response_format: 'b64_json',
-        });
-
-        const imageData = response.data?.[0]?.b64_json;
-        if (!imageData) {
-            return NextResponse.json({ error: 'No image generated' }, { status: 500 });
+        if (!response.ok) {
+            const error = await response.text();
+            console.error('Hugging Face API error:', error);
+            return NextResponse.json({ error: 'Failed to generate image' }, { status: 500 });
         }
 
-        return NextResponse.json({ image: imageData });
+        // Convert response to base64
+        const imageBuffer = await response.arrayBuffer();
+        const base64Image = Buffer.from(imageBuffer).toString('base64');
+
+        return NextResponse.json({ image: base64Image });
     } catch (error: any) {
         console.error('Error generating icon:', error);
         return NextResponse.json({
