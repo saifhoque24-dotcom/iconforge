@@ -69,18 +69,27 @@ Details: Polished, premium quality, production-ready icon design.`;
         // Step 2: Generate Image
         let response;
         try {
-            // Try SDXL first (Higher Quality)
+            // Priority 1: SDXL (Best Quality)
             response = await client.textToImage({
                 model: 'stabilityai/stable-diffusion-xl-base-1.0',
                 inputs: enhancedPrompt,
             });
         } catch (sdxlError) {
-            console.error('SDXL failed, falling back to FLUX:', sdxlError);
-            // Fallback to FLUX.1-schnell (Fast & Free)
-            response = await client.textToImage({
-                model: 'black-forest-labs/FLUX.1-schnell',
-                inputs: enhancedPrompt,
-            });
+            console.error('SDXL failed, trying FLUX:', sdxlError);
+            try {
+                // Priority 2: FLUX.1-schnell (Fast & Free)
+                response = await client.textToImage({
+                    model: 'black-forest-labs/FLUX.1-schnell',
+                    inputs: enhancedPrompt,
+                });
+            } catch (fluxError) {
+                console.error('FLUX failed, trying SD 2.1:', fluxError);
+                // Priority 3: Stable Diffusion 2.1 (Reliable Fallback)
+                response = await client.textToImage({
+                    model: 'stabilityai/stable-diffusion-2-1',
+                    inputs: enhancedPrompt,
+                });
+            }
         }
 
         // The SDK returns a Blob
@@ -96,9 +105,19 @@ Details: Polished, premium quality, production-ready icon design.`;
         return NextResponse.json({ image: base64Image });
     } catch (error: any) {
         console.error('Error generating icon:', error);
+
+        // Check for rate limit errors specifically
+        const errorMessage = error?.message || '';
+        if (errorMessage.includes('rate limit') || errorMessage.includes('usage limit')) {
+            return NextResponse.json({
+                error: 'High traffic - please try again in a few seconds.',
+                details: 'Our AI servers are currently busy.'
+            }, { status: 503 });
+        }
+
         return NextResponse.json({
-            error: error?.message || 'Failed to generate icon',
-            details: error?.toString()
+            error: 'Failed to generate icon',
+            details: error?.message || 'Unknown error'
         }, { status: 500 });
     }
 }
