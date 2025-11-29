@@ -64,22 +64,7 @@ export default function Home() {
         }
     };
 
-    const deleteIconHandler = async (id: number) => {
-        if (!confirm('Are you sure you want to delete this icon?')) return;
 
-        try {
-            const res = await fetch(`/api/icons?id=${id}&email=${encodeURIComponent(email)}`, {
-                method: 'DELETE',
-            });
-
-            if (!res.ok) throw new Error('Failed to delete icon');
-
-            setIcons(icons.filter(icon => icon.id !== id));
-        } catch (err) {
-            console.error(err);
-            alert('Failed to delete icon');
-        }
-    };
 
     const toggleFavorite = async (id: number) => {
         try {
