@@ -25,8 +25,9 @@ export async function POST(req: Request) {
             }
         });
 
-        // Convert Blob to base64
-        const buffer = await response.arrayBuffer();
+        // The SDK returns a Blob, but TypeScript might be confused. 
+        // We can cast it or use arrayBuffer() if it exists.
+        const buffer = await (response as Blob).arrayBuffer();
         const base64Image = Buffer.from(buffer).toString('base64');
 
         return NextResponse.json({ image: base64Image });
