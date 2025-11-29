@@ -172,12 +172,20 @@ export async function getUserIcons(userId: number) {
 }
 
 export async function deleteIcon(iconId: number, userId: number) {
+  await sql`
+        DELETE FROM icons 
+        WHERE id = ${iconId} AND user_id = ${userId}
+    `;
+}
+
+export async function toggleFavorite(iconId: number, userId: number) {
   const result = await sql`
-    DELETE FROM icons 
-    WHERE id = ${iconId} AND user_id = ${userId}
-    RETURNING *
-  `;
-  return result.rows[0];
+        UPDATE icons 
+        SET is_favorite = NOT COALESCE(is_favorite, FALSE)
+        WHERE id = ${iconId} AND user_id = ${userId}
+        RETURNING is_favorite
+    `;
+  return result.rows[0]?.is_favorite;
 }
 
 export async function logUsage(userId: number, prompt: string) {

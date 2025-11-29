@@ -64,6 +64,43 @@ export default function Home() {
         }
     };
 
+    const deleteIconHandler = async (id: number) => {
+        if (!confirm('Are you sure you want to delete this icon?')) return;
+
+        try {
+            const res = await fetch(`/api/icons?id=${id}&email=${encodeURIComponent(email)}`, {
+                method: 'DELETE',
+            });
+
+            if (!res.ok) throw new Error('Failed to delete icon');
+
+            setIcons(icons.filter(icon => icon.id !== id));
+        } catch (err) {
+            console.error(err);
+            alert('Failed to delete icon');
+        }
+    };
+
+    const toggleFavorite = async (id: number) => {
+        try {
+            const res = await fetch('/api/icons', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, email: email }),
+            });
+
+            if (!res.ok) throw new Error('Failed to toggle favorite');
+
+            const data = await res.json();
+
+            setIcons(icons.map(icon =>
+                icon.id === id ? { ...icon, is_favorite: data.isFavorite } : icon
+            ));
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     const downloadIcon = (imageData: string, prompt: string) => {
         const link = document.createElement('a');
         link.href = `data:image/png;base64,${imageData}`;
@@ -326,23 +363,34 @@ export default function Home() {
                         ) : (
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                 {icons.map((icon: any) => (
-                                    <div key={icon.id} className="group relative bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-gray-300 transition-all">
-                                        <img
-                                            src={`data:image/png;base64,${icon.image_data}`}
-                                            alt={icon.prompt}
-                                            className="w-full aspect-square object-contain mb-2"
-                                        />
-                                        <p className="text-xs text-gray-500 truncate mb-2">{icon.prompt}</p>
+                                    <div key={icon.id} className="bg-gray-50 rounded-xl p-4 border border-gray-200 group relative">
+                                        <div className="aspect-square mb-3 bg-white rounded-lg flex items-center justify-center overflow-hidden relative">
+                                            <img
+                                                src={`data:image/png;base64,${icon.image_data}`}
+                                                alt={icon.prompt}
+                                                className="w-full h-full object-contain"
+                                            />
+                                            <button
+                                                onClick={() => toggleFavorite(icon.id)}
+                                                className="absolute top-2 right-2 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-all opacity-0 group-hover:opacity-100"
+                                            >
+                                                <Star
+                                                    size={16}
+                                                    className={icon.is_favorite ? "fill-yellow-400 text-yellow-400" : "text-gray-400"}
+                                                />
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-gray-500 truncate mb-3">{icon.prompt}</p>
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={() => downloadIcon(icon.image_data, icon.prompt)}
-                                                className="flex-1 bg-black text-white text-xs px-3 py-2 rounded-lg hover:bg-gray-800 transition-all"
+                                                className="flex-1 bg-black text-white py-2 rounded-lg text-xs font-medium hover:bg-gray-800 transition-all"
                                             >
                                                 Download
                                             </button>
                                             <button
                                                 onClick={() => deleteIconHandler(icon.id)}
-                                                className="bg-red-100 text-red-600 text-xs px-3 py-2 rounded-lg hover:bg-red-200 transition-all"
+                                                className="px-3 py-2 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100 transition-all"
                                             >
                                                 Delete
                                             </button>
