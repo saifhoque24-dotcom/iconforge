@@ -31,7 +31,11 @@ export async function POST(req: Request) {
         if (!response.ok) {
             const error = await response.text();
             console.error('Hugging Face API error:', error);
-            return NextResponse.json({ error: 'Failed to generate image' }, { status: 500 });
+            return NextResponse.json({
+                error: 'Failed to generate image',
+                details: error,
+                status: response.status
+            }, { status: 500 });
         }
 
         // Convert response to base64
