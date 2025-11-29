@@ -15,7 +15,7 @@ export async function POST(req: Request) {
         }
 
         const hf = new HfInference(apiKey, {
-            endpoint: 'https://router.huggingface.co',
+            endpointUrl: 'https://router.huggingface.co',
         });
 
         // Use Stable Diffusion 2.1
