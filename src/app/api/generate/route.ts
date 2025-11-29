@@ -24,7 +24,14 @@ export async function POST(req: Request) {
         // Use FLUX.1-schnell (free and fast)
         const response = await client.textToImage({
             model: 'black-forest-labs/FLUX.1-schnell',
-            inputs: `professional vector icon of ${prompt}, flat design, minimal, solid colors, white background, simple clean icon style`,
+            inputs: `Professional app icon design: ${prompt}. 
+Style: Modern, clean, minimalist vector icon with smooth edges and perfect symmetry.
+Quality: Ultra high-definition, crisp details, professional grade.
+Design: Centered composition, balanced proportions, subtle depth with soft shadows.
+Colors: Vibrant but harmonious color palette, slight gradients for depth.
+Background: Pure white (#FFFFFF) or subtle light gradient.
+Format: Square aspect ratio, suitable for app stores and websites.
+Details: Polished, premium quality, production-ready icon design.`,
         });
 
         // The SDK returns a Blob
