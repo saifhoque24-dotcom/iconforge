@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserByEmail, deductCredit } from '@/lib/db';
+import { getOrCreateUser, getUserByEmail, deductCredit } from '@/lib/db';
 
 export async function GET(req: Request) {
     try {
@@ -10,11 +10,8 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Email required' }, { status: 400 });
         }
 
-        const user = await getUserByEmail(email);
-
-        if (!user) {
-            return NextResponse.json({ credits: 0 });
-        }
+        // Create user if they don't exist, otherwise get their credits
+        const user = await getOrCreateUser(email);
 
         return NextResponse.json({ credits: user.credits });
     } catch (error: any) {
