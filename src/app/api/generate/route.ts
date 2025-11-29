@@ -83,12 +83,21 @@ Details: Polished, premium quality, production-ready icon design.`;
                     inputs: enhancedPrompt,
                 });
             } catch (fluxError) {
-                console.error('FLUX failed, trying SDXL-Turbo:', fluxError);
-                // Priority 3: SDXL-Turbo (Fast Fallback)
-                response = await client.textToImage({
-                    model: 'stabilityai/sdxl-turbo',
-                    inputs: enhancedPrompt,
-                });
+                console.error('FLUX failed, trying SDXL-Lightning:', fluxError);
+                try {
+                    // Priority 3: SDXL-Lightning (ByteDance - Fast)
+                    response = await client.textToImage({
+                        model: 'ByteDance/SDXL-Lightning',
+                        inputs: enhancedPrompt,
+                    });
+                } catch (lightningError) {
+                    console.error('Lightning failed, trying OpenJourney:', lightningError);
+                    // Priority 4: OpenJourney (Midjourney style - Reliable)
+                    response = await client.textToImage({
+                        model: 'prompthero/openjourney',
+                        inputs: enhancedPrompt,
+                    });
+                }
             }
         }
 
