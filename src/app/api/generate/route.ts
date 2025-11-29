@@ -14,7 +14,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Hugging Face API key not configured' }, { status: 500 });
         }
 
-        const hf = new HfInference(apiKey);
+        const hf = new HfInference(apiKey, {
+            endpoint: 'https://router.huggingface.co',
+        });
 
         // Use Stable Diffusion 2.1
         const response = await hf.textToImage({
