@@ -9,16 +9,16 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
         }
 
-        const apiKey = process.env.HUGGINGFACE_API_KEY;
+        const apiKey = process.env.HUGGINGFACE_API_KEY?.trim();
         if (!apiKey) {
             return NextResponse.json({ error: 'Hugging Face API key not configured' }, { status: 500 });
         }
 
         const client = new InferenceClient(apiKey);
 
-        // Use Stable Diffusion 2.1
+        // Use Stable Diffusion v1.5 (very reliable)
         const response = await client.textToImage({
-            model: 'stabilityai/stable-diffusion-2-1',
+            model: 'runwayml/stable-diffusion-v1-5',
             inputs: `professional vector icon of ${prompt}, flat design, minimal, solid colors, white background, simple clean icon style`,
             parameters: {
                 negative_prompt: 'blur, fuzzy, low quality, text, watermark, complex, realistic, photo, 3d',
