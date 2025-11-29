@@ -24,6 +24,8 @@ export default function Home() {
     const [icons, setIcons] = useState<any[]>([]);
     const [showGallery, setShowGallery] = useState(false);
     const [selectedStyle, setSelectedStyle] = useState('modern');
+    const [selectedColor, setSelectedColor] = useState('vibrant');
+    const [selectedSize, setSelectedSize] = useState('1024');
 
     useEffect(() => {
         // Load Revolut Checkout SDK
@@ -131,7 +133,7 @@ export default function Home() {
             const res = await fetch('/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt, email, style: selectedStyle }),
+                body: JSON.stringify({ prompt, email, style: selectedStyle, color: selectedColor, size: selectedSize }),
             });
 
             const data = await res.json();
@@ -261,12 +263,67 @@ export default function Home() {
                                     type="button"
                                     onClick={() => setSelectedStyle(style.id)}
                                     className={`p-3 rounded-xl border-2 transition-all text-sm font-medium ${selectedStyle === style.id
-                                            ? 'border-black bg-black text-white'
-                                            : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                                        ? 'border-black bg-black text-white'
+                                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <span className="block text-lg mb-1">{style.emoji}</span>
                                     {style.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Color Palette Selector */}
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium mb-3 text-gray-700">Color Palette</label>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {[
+                                { id: 'vibrant', label: 'Vibrant', colors: ['#FF6B6B', '#4ECDC4', '#45B7D1'] },
+                                { id: 'pastel', label: 'Pastel', colors: ['#FFB3BA', '#BAFFC9', '#BAE1FF'] },
+                                { id: 'dark', label: 'Dark', colors: ['#2C3E50', '#34495E', '#7F8C8D'] },
+                                { id: 'monochrome', label: 'Mono', colors: ['#000000', '#666666', '#CCCCCC'] },
+                            ].map((palette) => (
+                                <button
+                                    key={palette.id}
+                                    type="button"
+                                    onClick={() => setSelectedColor(palette.id)}
+                                    className={`p-3 rounded-xl border-2 transition-all ${selectedColor === palette.id
+                                            ? 'border-black bg-gray-50'
+                                            : 'border-gray-200 bg-white hover:border-gray-300'
+                                        }`}
+                                >
+                                    <div className="flex gap-1 mb-2 justify-center">
+                                        {palette.colors.map((color, i) => (
+                                            <div key={i} className="w-4 h-4 rounded-full" style={{ backgroundColor: color }} />
+                                        ))}
+                                    </div>
+                                    <span className="text-xs font-medium">{palette.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Size Selector */}
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium mb-3 text-gray-700">Icon Size</label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {[
+                                { id: '512', label: '512×512', desc: 'Small' },
+                                { id: '1024', label: '1024×1024', desc: 'Standard' },
+                                { id: '2048', label: '2048×2048', desc: 'Large' },
+                            ].map((size) => (
+                                <button
+                                    key={size.id}
+                                    type="button"
+                                    onClick={() => setSelectedSize(size.id)}
+                                    className={`p-3 rounded-xl border-2 transition-all text-sm font-medium ${selectedSize === size.id
+                                            ? 'border-black bg-black text-white'
+                                            : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                                        }`}
+                                >
+                                    <div className="font-bold">{size.label}</div>
+                                    <div className="text-xs opacity-70">{size.desc}</div>
                                 </button>
                             ))}
                         </div>
