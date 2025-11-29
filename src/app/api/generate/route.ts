@@ -26,25 +26,35 @@ export async function POST(req: Request) {
         // We use a fast instruction-tuned model to analyze the user's request and generate a detailed visual description
         let enhancedPrompt = prompt;
         try {
-            const researchPrompt = `You are an expert brand designer. Create a precise image generation prompt for an app icon based EXACTLY on the user's request.
+            // Construct a structured prompt for Mistral-7B-Instruct
+            // We use [INST] tags which are standard for this model family
+            const researchPrompt = `[INST] You are an expert prompt engineer for Stable Diffusion XL.
+Your goal is to convert a user's request into a highly effective image generation prompt for an app icon.
 
-User's Request: "${prompt}"
+User Request: "${prompt}"
 
-Rules:
-1. If the user mentions a specific object, color, or style, YOU MUST USE IT. Do not change their specific requirements.
-2. If the user provides a business name, incorporate its essence, first letter, or a relevant symbol.
-3. Enhance the description with professional design terms (vector, minimalist, high quality) but DO NOT change the user's core idea.
-4. If the request is vague, use industry standards to fill in the gaps.
+Guidelines:
+1. Keep the user's core idea exactly as is.
+2. If they provide a name, suggest a lettermark or symbol representing it.
+3. Add technical keywords for quality: "vector", "minimalist", "professional", "smooth", "white background".
+4. Do NOT add conversational text. Output ONLY the prompt.
 
-Output ONLY the final image prompt string. Do not include explanations.
-Format: "App icon for [User's Request], [Specific Visual Elements], [Style Details], [Colors], [Lighting], white background."`;
+Examples:
+Input: "Blue rocket for Acme"
+Output: App icon, blue rocket ship taking off, letter "A" on the wing, minimalist vector style, flat design, vibrant blue colors, white background, high quality.
+
+Input: "Coffee shop"
+Output: App icon, stylized coffee cup with steam, warm brown and beige colors, cozy aesthetic, vector illustration, white background.
+
+Input: "${prompt}"
+Output: [/INST]`;
 
             const researchResponse = await client.textGeneration({
                 model: 'mistralai/Mistral-7B-Instruct-v0.2',
                 inputs: researchPrompt,
                 parameters: {
                     max_new_tokens: 150,
-                    temperature: 0.7,
+                    temperature: 0.3, // Lower temperature for more deterministic/focused output
                     return_full_text: false,
                 }
             });
