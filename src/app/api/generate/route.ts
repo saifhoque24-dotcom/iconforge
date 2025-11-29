@@ -1,4 +1,4 @@
-```typescript
+
 import { NextResponse } from 'next/server';
 import { InferenceClient } from '@huggingface/inference';
 import { getUserByEmail, saveIcon } from '@/lib/db';
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
         // Smart prompt enhancement
         // We wrap the user's prompt in a professional icon design template
         // This allows the user to just say "blue rocket" and get a high quality result
-        const enhancedPrompt = `Professional app icon design: ${ prompt }.
+        const enhancedPrompt = `Professional app icon design: ${prompt}.
 Style: Modern, clean, minimalist vector icon with smooth edges and perfect symmetry.
     Quality: Ultra high - definition, crisp details, professional grade.
         Design: Centered composition, balanced proportions, subtle depth with soft shadows.
