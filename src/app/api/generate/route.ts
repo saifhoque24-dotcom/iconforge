@@ -23,38 +23,29 @@ export async function POST(req: Request) {
         const client = new InferenceClient(apiKey);
 
         // Step 1: "Research" and Expand Prompt using an LLM
-        // We use a fast instruction-tuned model to analyze the user's request and generate a detailed visual description
         let enhancedPrompt = prompt;
         try {
-            // Construct a structured prompt for Mistral-7B-Instruct
-            // We use [INST] tags which are standard for this model family
-            const researchPrompt = `[INST] You are an expert prompt engineer for Stable Diffusion XL.
+            // Try Zephyr-7b-beta (often reliable free tier)
+            const researchPrompt = `<|system|>
+You are an expert prompt engineer for Stable Diffusion XL.
 Your goal is to convert a user's request into a highly effective image generation prompt for an app icon.
-
-User Request: "${prompt}"
-
 Guidelines:
 1. Keep the user's core idea exactly as is.
 2. If they provide a name, suggest a lettermark or symbol representing it.
-3. Add technical keywords for quality: "vector", "minimalist", "professional", "smooth", "white background".
+3. Add technical keywords: "vector", "minimalist", "professional", "smooth", "white background".
 4. Do NOT add conversational text. Output ONLY the prompt.
-
-Examples:
-Input: "Blue rocket for Acme"
-Output: App icon, blue rocket ship taking off, letter "A" on the wing, minimalist vector style, flat design, vibrant blue colors, white background, high quality.
-
-Input: "Coffee shop"
-Output: App icon, stylized coffee cup with steam, warm brown and beige colors, cozy aesthetic, vector illustration, white background.
-
-Input: "${prompt}"
-Output: [/INST]`;
+</s>
+<|user|>
+${prompt}
+</s>
+<|assistant|>`;
 
             const researchResponse = await client.textGeneration({
-                model: 'mistralai/Mistral-7B-Instruct-v0.2',
+                model: 'HuggingFaceH4/zephyr-7b-beta',
                 inputs: researchPrompt,
                 parameters: {
                     max_new_tokens: 150,
-                    temperature: 0.3, // Lower temperature for more deterministic/focused output
+                    temperature: 0.3,
                     return_full_text: false,
                 }
             });
@@ -65,7 +56,7 @@ Output: [/INST]`;
             }
         } catch (researchError) {
             console.error('Research step failed, falling back to template:', researchError);
-            // Fallback to the template if LLM fails
+            // Fallback to template
             enhancedPrompt = `Professional app icon design: ${prompt}. 
 Style: Modern, clean, minimalist vector icon with smooth edges and perfect symmetry.
 Quality: Ultra high-definition, crisp details, professional grade.
@@ -75,11 +66,22 @@ Format: Square aspect ratio, suitable for app stores and websites.
 Details: Polished, premium quality, production-ready icon design.`;
         }
 
-        // Step 2: Generate Image using SDXL
-        const response = await client.textToImage({
-            model: 'stabilityai/stable-diffusion-xl-base-1.0',
-            inputs: enhancedPrompt,
-        });
+        // Step 2: Generate Image
+        let response;
+        try {
+            // Try SDXL first (Higher Quality)
+            response = await client.textToImage({
+                model: 'stabilityai/stable-diffusion-xl-base-1.0',
+                inputs: enhancedPrompt,
+            });
+        } catch (sdxlError) {
+            console.error('SDXL failed, falling back to FLUX:', sdxlError);
+            // Fallback to FLUX.1-schnell (Fast & Free)
+            response = await client.textToImage({
+                model: 'black-forest-labs/FLUX.1-schnell',
+                inputs: enhancedPrompt,
+            });
+        }
 
         // The SDK returns a Blob
         const buffer = await (response as unknown as Blob).arrayBuffer();
