@@ -23,11 +23,6 @@ export default function Home() {
     const [hasEmail, setHasEmail] = useState(false);
     const [icons, setIcons] = useState<any[]>([]);
     const [showGallery, setShowGallery] = useState(false);
-    const [selectedStyle, setSelectedStyle] = useState('modern');
-    const [selectedColor, setSelectedColor] = useState('vibrant');
-    const [selectedSize, setSelectedSize] = useState('1024');
-    const [batchMode, setBatchMode] = useState(false);
-    const [batchImages, setBatchImages] = useState<string[]>([]);
 
     useEffect(() => {
         // Load Revolut Checkout SDK
@@ -103,8 +98,7 @@ export default function Home() {
         if (!prompt.trim()) return;
 
         // Check credits
-        const creditsNeeded = batchMode ? 4 : 1;
-        if (credits < creditsNeeded) {
+        if (credits <= 0) {
             setShowPricing(true);
             return;
         }
@@ -112,7 +106,6 @@ export default function Home() {
         setLoading(true);
         setError('');
         setImage(null);
-        setBatchImages([]);
 
         try {
             // Deduct credit first
@@ -133,37 +126,21 @@ export default function Home() {
             const creditData = await creditRes.json();
             setCredits(creditData.credits);
 
-            // Generate icon(s)
-            if (batchMode) {
-                // Generate 4 variations
-                const promises = Array(4).fill(null).map(() =>
-                    fetch('/api/generate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt, email, style: selectedStyle, color: selectedColor, size: selectedSize }),
-                    }).then(res => res.json())
-                );
+            // Generate icon
+            const res = await fetch('/api/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, email }),
+            });
 
-                const results = await Promise.all(promises);
-                const images = results.map(data => data.image).filter(Boolean);
-                setBatchImages(images);
-            } else {
-                // Single generation
-                const res = await fetch('/api/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt, email, style: selectedStyle, color: selectedColor, size: selectedSize }),
-                });
+            const data = await res.json();
 
-                const data = await res.json();
-
-                if (!res.ok) {
-                    const errorMessage = data.details ? `${data.error}: ${data.details}` : (data.error || 'Failed to generate icon');
-                    throw new Error(errorMessage);
-                }
-
-                setImage(data.image);
+            if (!res.ok) {
+                const errorMessage = data.details ? `${data.error}: ${data.details}` : (data.error || 'Failed to generate icon');
+                throw new Error(errorMessage);
             }
+
+            setImage(data.image);
             fetchIcons(); // Refresh gallery
         } catch (err: any) {
             setError(err.message);
@@ -267,105 +244,6 @@ export default function Home() {
                 </div>
 
                 <div className="max-w-xl mx-auto">
-                    {/* Style Selector */}
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium mb-3 text-gray-700">Choose Style</label>
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                            {[
-                                { id: 'modern', label: 'Modern', emoji: '✨' },
-                                { id: 'flat', label: 'Flat', emoji: '🎨' },
-                                { id: '3d', label: '3D', emoji: '🎭' },
-                                { id: 'gradient', label: 'Gradient', emoji: '🌈' },
-                                { id: 'minimal', label: 'Minimal', emoji: '⚪' },
-                            ].map((style) => (
-                                <button
-                                    key={style.id}
-                                    type="button"
-                                    onClick={() => setSelectedStyle(style.id)}
-                                    className={`p-3 rounded-xl border-2 transition-all text-sm font-medium ${selectedStyle === style.id
-                                        ? 'border-black bg-black text-white'
-                                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                                        }`}
-                                >
-                                    <span className="block text-lg mb-1">{style.emoji}</span>
-                                    {style.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Color Palette Selector */}
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium mb-3 text-gray-700">Color Palette</label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            {[
-                                { id: 'vibrant', label: 'Vibrant', colors: ['#FF6B6B', '#4ECDC4', '#45B7D1'] },
-                                { id: 'pastel', label: 'Pastel', colors: ['#FFB3BA', '#BAFFC9', '#BAE1FF'] },
-                                { id: 'dark', label: 'Dark', colors: ['#2C3E50', '#34495E', '#7F8C8D'] },
-                                { id: 'monochrome', label: 'Mono', colors: ['#000000', '#666666', '#CCCCCC'] },
-                            ].map((palette) => (
-                                <button
-                                    key={palette.id}
-                                    type="button"
-                                    onClick={() => setSelectedColor(palette.id)}
-                                    className={`p-3 rounded-xl border-2 transition-all ${selectedColor === palette.id
-                                        ? 'border-black bg-gray-50'
-                                        : 'border-gray-200 bg-white hover:border-gray-300'
-                                        }`}
-                                >
-                                    <div className="flex gap-1 mb-2 justify-center">
-                                        {palette.colors.map((color, i) => (
-                                            <div key={i} className="w-4 h-4 rounded-full" style={{ backgroundColor: color }} />
-                                        ))}
-                                    </div>
-                                    <span className="text-xs font-medium">{palette.label}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Size Selector */}
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium mb-3 text-gray-700">Icon Size</label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {[
-                                { id: '512', label: '512×512', desc: 'Small' },
-                                { id: '1024', label: '1024×1024', desc: 'Standard' },
-                                { id: '2048', label: '2048×2048', desc: 'Large' },
-                            ].map((size) => (
-                                <button
-                                    key={size.id}
-                                    type="button"
-                                    onClick={() => setSelectedSize(size.id)}
-                                    className={`p-3 rounded-xl border-2 transition-all text-sm font-medium ${selectedSize === size.id
-                                        ? 'border-black bg-black text-white'
-                                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                                        }`}
-                                >
-                                    <div className="font-bold">{size.label}</div>
-                                    <div className="text-xs opacity-70">{size.desc}</div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Batch Mode Toggle */}
-                    <div className="mb-6 flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
-                        <div>
-                            <div className="font-medium">Batch Mode</div>
-                            <div className="text-xs text-gray-500">Generate 4 variations (uses 4 credits)</div>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setBatchMode(!batchMode)}
-                            className={`relative w-14 h-7 rounded-full transition-colors ${batchMode ? 'bg-black' : 'bg-gray-300'
-                                }`}
-                        >
-                            <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${batchMode ? 'transform translate-x-7' : ''
-                                }`} />
-                        </button>
-                    </div>
-
                     <form onSubmit={generateIcon} className="relative mb-8 group">
                         <input
                             type="text"
@@ -409,27 +287,14 @@ export default function Home() {
                         </div>
                     )}
 
-                    {/* Batch Results Grid */}
-                    {batchImages.length > 0 && (
-                        <div className="mt-8">
-                            <h3 className="text-lg font-bold mb-4 text-center">4 Variations Generated</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                {batchImages.map((img, index) => (
-                                    <div key={index} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                                        <img
-                                            src={`data:image/png;base64,${img}`}
-                                            alt={`Variation ${index + 1}`}
-                                            className="w-full aspect-square object-contain mb-3"
-                                        />
-                                        <button
-                                            onClick={() => downloadIcon(img, `${prompt}_v${index + 1}`)}
-                                            className="w-full bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-all text-sm font-medium"
-                                        >
-                                            Download #{index + 1}
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
+                    {image && (
+                        <div className="flex justify-center mt-4">
+                            <button
+                                onClick={() => downloadIcon(image, prompt)}
+                                className="bg-black text-white px-6 py-3 rounded-xl font-medium hover:bg-gray-800 transition-all"
+                            >
+                                Download Icon
+                            </button>
                         </div>
                     )}
                 </div>
