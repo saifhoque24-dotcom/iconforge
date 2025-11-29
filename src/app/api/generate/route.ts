@@ -26,18 +26,18 @@ export async function POST(req: Request) {
         // We use a fast instruction-tuned model to analyze the user's request and generate a detailed visual description
         let enhancedPrompt = prompt;
         try {
-            const researchPrompt = `You are an expert brand designer and visual researcher. 
-Your task is to create a detailed image generation prompt for an app icon based on the user's idea.
-User's Idea: "${prompt}"
+            const researchPrompt = `You are an expert brand designer. Create a precise image generation prompt for an app icon based EXACTLY on the user's request.
 
-Analyze this idea. Consider:
-1. The industry standards for this type of business/app.
-2. Color psychology (e.g., blue for trust, red for energy).
-3. Key symbols and visual metaphors.
-4. A modern, professional aesthetic (minimalist, vector, clean).
+User's Request: "${prompt}"
 
-Output ONLY the detailed image prompt. Do not include explanations. 
-The prompt should be in this format: "App icon for [Idea], [Visual Description], [Style], [Colors], [Lighting], white background."`;
+Rules:
+1. If the user mentions a specific object, color, or style, YOU MUST USE IT. Do not change their specific requirements.
+2. If the user provides a business name, incorporate its essence, first letter, or a relevant symbol.
+3. Enhance the description with professional design terms (vector, minimalist, high quality) but DO NOT change the user's core idea.
+4. If the request is vague, use industry standards to fill in the gaps.
+
+Output ONLY the final image prompt string. Do not include explanations.
+Format: "App icon for [User's Request], [Specific Visual Elements], [Style Details], [Colors], [Lighting], white background."`;
 
             const researchResponse = await client.textGeneration({
                 model: 'mistralai/Mistral-7B-Instruct-v0.2',
