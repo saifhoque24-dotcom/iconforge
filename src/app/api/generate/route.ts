@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { HfInference } from '@huggingface/inference';
 
 export async function POST(req: Request) {
     try {
@@ -13,40 +14,27 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Hugging Face API key not configured' }, { status: 500 });
         }
 
-        // Use Stable Diffusion via Hugging Face Inference API (FREE!)
-        const response = await fetch(
-            'https://router.huggingface.co/models/stabilityai/stable-diffusion-2-1',
-            {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    inputs: `professional vector icon of ${prompt}, flat design, minimal, solid colors, white background, simple clean icon style`,
-                }),
+        const hf = new HfInference(apiKey);
+
+        // Use Stable Diffusion 2.1
+        const response = await hf.textToImage({
+            model: 'stabilityai/stable-diffusion-2-1',
+            inputs: `professional vector icon of ${prompt}, flat design, minimal, solid colors, white background, simple clean icon style`,
+            parameters: {
+                negative_prompt: 'blur, fuzzy, low quality, text, watermark, complex, realistic, photo, 3d',
             }
-        );
+        });
 
-        if (!response.ok) {
-            const error = await response.text();
-            console.error('Hugging Face API error:', error);
-            return NextResponse.json({
-                error: 'Failed to generate image',
-                details: error,
-                status: response.status
-            }, { status: 500 });
-        }
-
-        // Convert response to base64
-        const imageBuffer = await response.arrayBuffer();
-        const base64Image = Buffer.from(imageBuffer).toString('base64');
+        // Convert Blob to base64
+        const buffer = await response.arrayBuffer();
+        const base64Image = Buffer.from(buffer).toString('base64');
 
         return NextResponse.json({ image: base64Image });
     } catch (error: any) {
         console.error('Error generating icon:', error);
         return NextResponse.json({
-            error: error?.message || 'Failed to generate icon'
+            error: error?.message || 'Failed to generate icon',
+            details: error?.toString()
         }, { status: 500 });
     }
 }
