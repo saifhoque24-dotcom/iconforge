@@ -83,10 +83,10 @@ Details: Polished, premium quality, production-ready icon design.`;
                     inputs: enhancedPrompt,
                 });
             } catch (fluxError) {
-                console.error('FLUX failed, trying SD 1.5:', fluxError);
-                // Priority 3: Stable Diffusion 1.5 (Old but Reliable)
+                console.error('FLUX failed, trying SDXL-Turbo:', fluxError);
+                // Priority 3: SDXL-Turbo (Fast Fallback)
                 response = await client.textToImage({
-                    model: 'runwayml/stable-diffusion-v1-5',
+                    model: 'stabilityai/sdxl-turbo',
                     inputs: enhancedPrompt,
                 });
             }
