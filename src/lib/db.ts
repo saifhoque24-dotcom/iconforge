@@ -1,38 +1,56 @@
-
 import { sql } from '@vercel/postgres';
+
+// Run this once to fix existing database
+async function migrate() {
+  try {
+    // Update existing users to have 5 credits if they have 0
+    await sql`UPDATE users SET credits = 5 WHERE credits = 0`;
+
+    // Alter table to change default (if supported by your DB)
+    await sql`ALTER TABLE users ALTER COLUMN credits SET DEFAULT 5`;
+
+    console.log('Migration complete!');
+  } catch (error) {
+    console.error('Migration error:', error);
+  }
+}
 
 // Auto-initialize database tables
 async function initDB() {
   try {
     await sql`
-      CREATE TABLE IF NOT EXISTS users(
-  id SERIAL PRIMARY KEY,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  credits INTEGER DEFAULT 5,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-`;
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        credits INTEGER DEFAULT 5,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
     await sql`
-      CREATE TABLE IF NOT EXISTS transactions(
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER REFERENCES users(id),
-  revolut_order_id VARCHAR(255) UNIQUE,
-  amount DECIMAL(10, 2),
-  credits_purchased INTEGER,
-  status VARCHAR(50) DEFAULT 'pending',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  completed_at TIMESTAMP
-);
-`;
+      CREATE TABLE IF NOT EXISTS transactions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        revolut_order_id VARCHAR(255) UNIQUE,
+        amount DECIMAL(10, 2),
+        credits_purchased INTEGER,
+        status VARCHAR(50) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        completed_at TIMESTAMP
+      );
+    `;
     await sql`
-      CREATE TABLE IF NOT EXISTS usage(
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER REFERENCES users(id),
-  prompt TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-`;
+      CREATE TABLE IF NOT EXISTS usage (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        prompt TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+
+    // Run migration after tables exist
+    await migrate();
+
     console.log('Database tables initialized');
   } catch (error) {
     console.error('Failed to init DB:', error);
@@ -65,8 +83,8 @@ async function createUserInternal(email: string) {
 
 export async function getUserByEmail(email: string) {
   const result = await sql`
-SELECT * FROM users WHERE email = ${email}
-`;
+    SELECT * FROM users WHERE email = ${email}
+  `;
   return result.rows[0];
 }
 
@@ -75,7 +93,7 @@ export async function addCredits(userId: number, credits: number) {
     UPDATE users 
     SET credits = credits + ${credits}, updated_at = CURRENT_TIMESTAMP
     WHERE id = ${userId}
-RETURNING *
+    RETURNING *
   `;
   return result.rows[0];
 }
@@ -85,7 +103,7 @@ export async function deductCredit(userId: number) {
     UPDATE users 
     SET credits = credits - 1, updated_at = CURRENT_TIMESTAMP
     WHERE id = ${userId} AND credits > 0
-RETURNING *
+    RETURNING *
   `;
   return result.rows[0];
 }
@@ -97,9 +115,9 @@ export async function createTransaction(
   creditsPurchased: number
 ) {
   const result = await sql`
-    INSERT INTO transactions(user_id, revolut_order_id, amount, credits_purchased, status)
-VALUES(${userId}, ${revolutOrderId}, ${amount}, ${creditsPurchased}, 'pending')
-RETURNING *
+    INSERT INTO transactions (user_id, revolut_order_id, amount, credits_purchased, status)
+    VALUES (${userId}, ${revolutOrderId}, ${amount}, ${creditsPurchased}, 'pending')
+    RETURNING *
   `;
   return result.rows[0];
 }
@@ -109,14 +127,14 @@ export async function completeTransaction(revolutOrderId: string) {
     UPDATE transactions 
     SET status = 'completed', completed_at = CURRENT_TIMESTAMP
     WHERE revolut_order_id = ${revolutOrderId}
-RETURNING *
+    RETURNING *
   `;
   return result.rows[0];
 }
 
 export async function logUsage(userId: number, prompt: string) {
   await sql`
-    INSERT INTO usage(user_id, prompt)
-VALUES(${userId}, ${prompt})
+    INSERT INTO usage (user_id, prompt)
+    VALUES (${userId}, ${prompt})
   `;
 }
