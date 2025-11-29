@@ -24,7 +24,7 @@ export async function POST(req: Request) {
             response_format: 'b64_json',
         });
 
-        const imageData = response.data[0]?.b64_json;
+        const imageData = response.data?.[0]?.b64_json;
         if (!imageData) {
             return NextResponse.json({ error: 'No image generated' }, { status: 500 });
         }
