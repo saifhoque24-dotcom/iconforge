@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
         // Use Stable Diffusion via Hugging Face Inference API (FREE!)
         const response = await fetch(
-            'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1',
+            'https://router.huggingface.co/models/stabilityai/stable-diffusion-2-1',
             {
                 method: 'POST',
                 headers: {
