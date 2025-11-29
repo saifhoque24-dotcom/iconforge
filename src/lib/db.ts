@@ -71,14 +71,26 @@ export async function getOrCreateUser(email: string) {
 }
 
 async function createUserInternal(email: string) {
+  // First, insert or get the user
   const result = await sql`
-    INSERT INTO users (email, credits)
-    VALUES (${email}, CAST(5 AS INTEGER))
+    INSERT INTO users (email)
+    VALUES (${email})
     ON CONFLICT (email) 
     DO UPDATE SET updated_at = CURRENT_TIMESTAMP
     RETURNING *
   `;
-  return result.rows[0];
+
+  const user = result.rows[0];
+
+  // If this is a new user (credits is 0), give them 5 credits
+  if (user.credits === 0) {
+    const updated = await sql`
+      UPDATE users SET credits = 5 WHERE id = ${user.id} RETURNING *
+    `;
+    return updated.rows[0];
+  }
+
+  return user;
 }
 
 export async function getUserByEmail(email: string) {
