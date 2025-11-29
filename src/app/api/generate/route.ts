@@ -22,18 +22,50 @@ export async function POST(req: Request) {
 
         const client = new InferenceClient(apiKey);
 
-        // Smart prompt enhancement
-        // We wrap the user's prompt in a professional icon design template
-        // This allows the user to just say "blue rocket" and get a high quality result
-        const enhancedPrompt = `Professional app icon design: ${prompt}.
-Style: Modern, clean, minimalist vector icon with smooth edges and perfect symmetry.
-    Quality: Ultra high - definition, crisp details, professional grade.
-        Design: Centered composition, balanced proportions, subtle depth with soft shadows.
-            Background: Pure white(#FFFFFF) or subtle light gradient.
-                Format: Square aspect ratio, suitable for app stores and websites.
-                    Details: Polished, premium quality, production - ready icon design.`;
+        // Step 1: "Research" and Expand Prompt using an LLM
+        // We use a fast instruction-tuned model to analyze the user's request and generate a detailed visual description
+        let enhancedPrompt = prompt;
+        try {
+            const researchPrompt = `You are an expert brand designer and visual researcher. 
+Your task is to create a detailed image generation prompt for an app icon based on the user's idea.
+User's Idea: "${prompt}"
 
-        // Use SDXL for higher quality
+Analyze this idea. Consider:
+1. The industry standards for this type of business/app.
+2. Color psychology (e.g., blue for trust, red for energy).
+3. Key symbols and visual metaphors.
+4. A modern, professional aesthetic (minimalist, vector, clean).
+
+Output ONLY the detailed image prompt. Do not include explanations. 
+The prompt should be in this format: "App icon for [Idea], [Visual Description], [Style], [Colors], [Lighting], white background."`;
+
+            const researchResponse = await client.textGeneration({
+                model: 'mistralai/Mistral-7B-Instruct-v0.2',
+                inputs: researchPrompt,
+                parameters: {
+                    max_new_tokens: 150,
+                    temperature: 0.7,
+                    return_full_text: false,
+                }
+            });
+
+            if (researchResponse.generated_text) {
+                enhancedPrompt = researchResponse.generated_text.trim();
+                console.log('AI Researched Prompt:', enhancedPrompt);
+            }
+        } catch (researchError) {
+            console.error('Research step failed, falling back to template:', researchError);
+            // Fallback to the template if LLM fails
+            enhancedPrompt = `Professional app icon design: ${prompt}. 
+Style: Modern, clean, minimalist vector icon with smooth edges and perfect symmetry.
+Quality: Ultra high-definition, crisp details, professional grade.
+Design: Centered composition, balanced proportions, subtle depth with soft shadows.
+Background: Pure white (#FFFFFF) or subtle light gradient.
+Format: Square aspect ratio, suitable for app stores and websites.
+Details: Polished, premium quality, production-ready icon design.`;
+        }
+
+        // Step 2: Generate Image using SDXL
         const response = await client.textToImage({
             model: 'stabilityai/stable-diffusion-xl-base-1.0',
             inputs: enhancedPrompt,
