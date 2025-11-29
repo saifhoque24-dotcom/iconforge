@@ -26,7 +26,7 @@ export async function POST(req: Request) {
         });
 
         // The SDK returns a Blob
-        const buffer = await response.arrayBuffer();
+        const buffer = await (response as unknown as Blob).arrayBuffer();
         const base64Image = Buffer.from(buffer).toString('base64');
 
         return NextResponse.json({ image: base64Image });
