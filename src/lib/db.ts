@@ -54,11 +54,11 @@ export async function getOrCreateUser(email: string) {
 
 async function createUserInternal(email: string) {
   const result = await sql`
-    INSERT INTO users(email, credits)
-VALUES(${email}, 0)
-    ON CONFLICT(email) 
+    INSERT INTO users (email, credits)
+    VALUES (${email}, 5)
+    ON CONFLICT (email) 
     DO UPDATE SET updated_at = CURRENT_TIMESTAMP
-RETURNING *
+    RETURNING *
   `;
   return result.rows[0];
 }
