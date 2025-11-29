@@ -16,13 +16,10 @@ export async function POST(req: Request) {
 
         const client = new InferenceClient(apiKey);
 
-        // Use Stable Diffusion v1.5 (very reliable)
+        // Use FLUX.1-schnell (free and fast)
         const response = await client.textToImage({
-            model: 'runwayml/stable-diffusion-v1-5',
+            model: 'black-forest-labs/FLUX.1-schnell',
             inputs: `professional vector icon of ${prompt}, flat design, minimal, solid colors, white background, simple clean icon style`,
-            parameters: {
-                negative_prompt: 'blur, fuzzy, low quality, text, watermark, complex, realistic, photo, 3d',
-            }
         });
 
         // The SDK returns a Blob
