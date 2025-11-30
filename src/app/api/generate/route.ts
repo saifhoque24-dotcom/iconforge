@@ -91,25 +91,23 @@ CRITICAL RULES:
 2. PRESERVE EXACT DETAILS: If the user specifies a color, object, or style, you MUST include it exactly.
 3. LEARN FROM FAVORITES: If "USER'S PAST FAVORITES" are provided above, try to match their general vibe/style (e.g., if they like flat vector, give them flat vector) UNLESS the user explicitly asks for something different.
 4. VARIATION: If a VARIATION SEED is provided, create a DIFFERENT design variation (change angle, composition, style details) while keeping the core concept.
-5. LOGO DETECTION: If the request mentions "logo", "brand", "business", or includes a business name (e.g., "Elite Cuts", "TechCo"), treat it as a PROFESSIONAL LOGO request.
-6. LOGO GUIDELINES (when detected):
-   - Include the business name in elegant, readable typography
-   - Add "professional logo design" to the prompt
-   - Specify "clean composition, balanced layout"
-   - Include "vector style, scalable, professional branding"
-   - Mention relevant industry symbols (e.g., scissors for barber, code for tech)
-7. TYPOGRAPHY RULES (for logos):
-   - Always specify: "bold elegant typography, readable text, professional font"
-   - Include the exact business name in quotes in the prompt
-   - Add "text integrated seamlessly with icon"
-8. SPELLING ACCURACY (CRITICAL FOR LOGOS):
-   - Extract the EXACT business name from the user's request letter-by-letter
-   - In your prompt, write: "text spelling: [BUSINESS NAME]" to ensure correct letters
-   - Example: For "Elite Cuts", write "text spelling: E-L-I-T-E C-U-T-S"
-   - NEVER change, abbreviate, or misspell the business name
-9. INNOVATE SURROUNDINGS: You can innovate on the *style* (glass, 3D, vector) or *background*, but NEVER change the core symbol/flag.
-10. ENGAGE: Write a 1-sentence friendly message to the user explaining why this design works.
-11. FORMAT: 
+5. NO TEXT POLICY (CRITICAL):
+   - NEVER include text, letters, words, or business names in the generated image
+   - Generate SYMBOL/ICON ONLY - users will add text separately
+   - If user mentions a business name (e.g., "Elite Cuts"), extract the concept (barber shop) but DO NOT include the name in the image
+   - Focus on creating a recognizable symbol that represents the business/concept
+6. LOGO DETECTION: If the request mentions "logo", "brand", "business", or includes a business name (e.g., "Elite Cuts", "TechCo"), treat it as a PROFESSIONAL LOGO request.
+7. LOGO GUIDELINES (when detected):
+   - Create a professional SYMBOL/ICON only (no text!)
+   - Add "professional logo icon" or "brand symbol" to the prompt
+   - Specify "clean composition, balanced layout, centered"
+   - Include "vector style, scalable, professional"
+   - Mention relevant industry symbols (e.g., scissors for barber, code for tech, coffee for cafe)
+   - Add "no text, no letters, symbol only" to ensure text-free output
+8. INNOVATE SURROUNDINGS: You can innovate on the *style* (glass, 3D, vector) or *background*, but NEVER change the core symbol/flag.
+8. INNOVATE SURROUNDINGS: You can innovate on the *style* (glass, 3D, vector) or *background*, but NEVER change the core symbol/flag.
+9. ENGAGE: Write a 1-sentence friendly message to the user explaining why this design works.
+10. FORMAT: 
    Message: [Your warm message here]
    Prompt: [Raw prompt string here]
 
@@ -126,8 +124,8 @@ Prompt: App icon, blue rocket, flat vector style, minimal, vibrant blue, white b
 
 Input: "create a barber shop logo for Elite Cuts"
 Output:
-Message: I've designed a sharp, professional logo for Elite Cuts with classic barber elements and bold typography! ✂️💈
-Prompt: Professional logo design for "Elite Cuts" barber shop, text spelling: E-L-I-T-E C-U-T-S, vintage scissors and comb icon, bold elegant typography, readable text, black and gold color scheme, clean composition, balanced layout, vector style, scalable, professional branding, white background, high quality.
+Message: I've designed a sharp barber shop symbol with classic scissors and comb - perfect for Elite Cuts! Add your text separately for a professional finish. ✂️💈
+Prompt: Professional barber shop logo icon, vintage scissors and comb symbol, no text, no letters, symbol only, black and gold color scheme, clean composition, balanced layout, centered, vector style, scalable, professional branding, white background, high quality.
 
 Input: "${prompt}"
 Output: [/INST]`;
