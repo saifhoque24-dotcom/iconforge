@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { InferenceClient } from '@huggingface/inference';
-import { getUserByEmail, saveIcon } from '@/lib/db';
+import { getUserByEmail, saveIcon, getRecentFavorites } from '@/lib/db';
 
 export async function POST(req: Request) {
     try {
@@ -65,18 +65,31 @@ export async function POST(req: Request) {
         // If not a specific hardcoded flag, use LLM
         if (!specificFlagMatch) {
             try {
+                // Fetch user's recent favorites for context
+                let userContext = "";
+                if (email) {
+                    const user = await getUserByEmail(email);
+                    if (user) {
+                        const favorites = await getRecentFavorites(user.id, 3);
+                        if (favorites.length > 0) {
+                            userContext = `\nUSER'S PAST FAVORITES (LEARN FROM THESE STYLES):\n- ${favorites.join('\n- ')}\n`;
+                        }
+                    }
+                }
+
                 // Construct a structured prompt for Mistral-7B-Instruct
                 const researchPrompt = `[INST] You are a friendly, enthusiastic expert brand designer.
 Your goal is to refine the user's request into a Stable Diffusion XL prompt AND write a warm, human-like message to the user explaining your design choice.
 
 User Request: "${prompt}"
-
+${userContext}
 CRITICAL RULES:
 1. TONE: Be warm, friendly, and enthusiastic! Use emojis if appropriate. Avoid robotic language.
 2. PRESERVE EXACT DETAILS: If the user specifies a color, object, or style, you MUST include it exactly.
-3. INNOVATE SURROUNDINGS: You can innovate on the *style* (glass, 3D, vector) or *background*, but NEVER change the core symbol/flag.
-4. ENGAGE: Write a 1-sentence friendly message to the user explaining why this design works.
-5. FORMAT: 
+3. LEARN FROM FAVORITES: If "USER'S PAST FAVORITES" are provided above, try to match their general vibe/style (e.g., if they like flat vector, give them flat vector) UNLESS the user explicitly asks for something different.
+4. INNOVATE SURROUNDINGS: You can innovate on the *style* (glass, 3D, vector) or *background*, but NEVER change the core symbol/flag.
+5. ENGAGE: Write a 1-sentence friendly message to the user explaining why this design works.
+6. FORMAT: 
    Message: [Your warm message here]
    Prompt: [Raw prompt string here]
 
