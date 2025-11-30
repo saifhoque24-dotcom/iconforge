@@ -306,7 +306,7 @@ export default function Home() {
                     )}
 
                     {image && (
-                        <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 animate-in fade-in duration-300">
+                        <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
                             <div className="aspect-square relative rounded-xl overflow-hidden bg-gray-50 mb-6 flex items-center justify-center">
                                 <img
                                     src={`data:image/png;base64,${image}`}
