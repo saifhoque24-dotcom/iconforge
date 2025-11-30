@@ -21,34 +21,50 @@ export async function POST(req: Request) {
 
         const client = new InferenceClient(apiKey);
 
-        // Step 1: "Research" and Expand Prompt using an LLM
+        // Hardcoded descriptions for difficult flags to ensure 100% accuracy
+        const FLAG_MAP: Record<string, string> = {
+            'uae': 'Official Flag of United Arab Emirates, Red vertical band on hoist (left), Green (top), White (middle), Black (bottom) horizontal bands, flat vector, 2d, white background',
+            'united arab emirates': 'Official Flag of United Arab Emirates, Red vertical band on hoist (left), Green (top), White (middle), Black (bottom) horizontal bands, flat vector, 2d, white background',
+            'usa': 'Flag of United States, Stars and Stripes, Red and White horizontal stripes, Blue canton with white stars in top left, flat vector, 2d',
+            'america': 'Flag of United States, Stars and Stripes, Red and White horizontal stripes, Blue canton with white stars in top left, flat vector, 2d',
+            'uk': 'Union Jack Flag, United Kingdom, Red Cross of St George, Saltire of St Andrew, Saltire of St Patrick, correct layout, flat vector, 2d',
+        };
+
+        // Step 1: "Research" and Expand Prompt
         let enhancedPrompt = prompt;
         let engagementMessage = '';
-        const isFlag = prompt.toLowerCase().includes('flag');
+        const lowerPrompt = prompt.toLowerCase();
+        const isFlag = lowerPrompt.includes('flag');
 
-        try {
-            // Construct a structured prompt for Mistral-7B-Instruct
-            const researchPrompt = `[INST] You are an expert brand designer.
+        // Check for specific hardcoded flags first
+        let specificFlagMatch = false;
+        for (const [key, value] of Object.entries(FLAG_MAP)) {
+            if (lowerPrompt.includes(key)) {
+                enhancedPrompt = value;
+                engagementMessage = `I've used a strictly verified template for the ${key.toUpperCase()} flag to ensure geometric accuracy.`;
+                specificFlagMatch = true;
+                break;
+            }
+        }
+
+        // If not a specific hardcoded flag, use LLM
+        if (!specificFlagMatch) {
+            try {
+                // Construct a structured prompt for Mistral-7B-Instruct
+                const researchPrompt = `[INST] You are an expert brand designer.
 Your goal is to refine the user's request into a Stable Diffusion XL prompt AND write a short, engaging message to the user explaining your design choice.
 
 User Request: "${prompt}"
 
 CRITICAL RULES:
-1. KNOWN ENTITIES (FLAGS/LOGOS): If the user asks for a specific flag (e.g., UAE, USA), you MUST describe its EXACT layout.
-   - UAE Flag: "Official Flag of United Arab Emirates, Red vertical band on hoist (left), Green (top), White (middle), Black (bottom) horizontal bands."
-2. PRESERVE EXACT DETAILS: If the user specifies a color, object, or style, you MUST include it exactly.
-3. INNOVATE SURROUNDINGS: You can innovate on the *style* (glass, 3D, vector) or *background*, but NEVER change the core symbol/flag.
-4. ENGAGE: Write a 1-sentence friendly message to the user explaining why this design works.
-5. FORMAT: 
+1. PRESERVE EXACT DETAILS: If the user specifies a color, object, or style, you MUST include it exactly.
+2. INNOVATE SURROUNDINGS: You can innovate on the *style* (glass, 3D, vector) or *background*, but NEVER change the core symbol/flag.
+3. ENGAGE: Write a 1-sentence friendly message to the user explaining why this design works.
+4. FORMAT: 
    Message: [Your message here]
    Prompt: [Raw prompt string here]
 
 Examples:
-Input: "UAE Flag"
-Output: 
-Message: I've created a precise vector representation of the UAE flag, keeping the official colors and layout for maximum accuracy.
-Prompt: App icon, Official Flag of United Arab Emirates, Red vertical band on left, Green top band, White middle band, Black bottom band, correct colors, flat vector style, white background.
-
 Input: "Red cat"
 Output: 
 Message: I went with a geometric glass style for the red cat to give it a modern, tech-forward vibe!
@@ -57,51 +73,50 @@ Prompt: App icon, red cat, innovative geometric style, dynamic lighting, vibrant
 Input: "${prompt}"
 Output: [/INST]`;
 
-            const researchResponse = await client.textGeneration({
-                model: 'mistralai/Mistral-7B-Instruct-v0.2',
-                inputs: researchPrompt,
-                parameters: {
-                    max_new_tokens: 200,
-                    temperature: 0.4,
-                    return_full_text: false,
+                const researchResponse = await client.textGeneration({
+                    model: 'mistralai/Mistral-7B-Instruct-v0.2',
+                    inputs: researchPrompt,
+                    parameters: {
+                        max_new_tokens: 200,
+                        temperature: 0.4,
+                        return_full_text: false,
+                    }
+                });
+
+                if (researchResponse.generated_text) {
+                    const text = researchResponse.generated_text.trim();
+                    // Parse Message and Prompt
+                    const messageMatch = text.match(/Message:\s*(.+)/);
+                    const promptMatch = text.match(/Prompt:\s*(.+)/);
+
+                    if (messageMatch) engagementMessage = messageMatch[1].trim();
+                    if (promptMatch) enhancedPrompt = promptMatch[1].trim();
+                    else if (!messageMatch && text.length > 10) enhancedPrompt = text; // Fallback if format fails
+
+                    console.log('AI Message:', engagementMessage);
+                    console.log('AI Prompt:', enhancedPrompt);
                 }
-            });
-
-            if (researchResponse.generated_text) {
-                const text = researchResponse.generated_text.trim();
-                // Parse Message and Prompt
-                const messageMatch = text.match(/Message:\s*(.+)/);
-                const promptMatch = text.match(/Prompt:\s*(.+)/);
-
-                if (messageMatch) engagementMessage = messageMatch[1].trim();
-                if (promptMatch) enhancedPrompt = promptMatch[1].trim();
-                else if (!messageMatch && text.length > 10) enhancedPrompt = text; // Fallback if format fails
-
-                console.log('AI Message:', engagementMessage);
-                console.log('AI Prompt:', enhancedPrompt);
+            } catch (researchError) {
+                console.error('Research step failed, falling back to template:', researchError);
+                enhancedPrompt = `Professional app icon design: ${prompt}. Style: Modern, clean, minimalist vector icon.`;
+                engagementMessage = "I've created a clean, professional design based on your request.";
             }
-        } catch (researchError) {
-            console.error('Research step failed, falling back to template:', researchError);
-            enhancedPrompt = `Professional app icon design: ${prompt}. 
-Style: Modern, clean, minimalist vector icon with smooth edges and perfect symmetry.
-Quality: Ultra high-definition, crisp details, professional grade.
-Design: Centered composition, balanced proportions, subtle depth with soft shadows.
-Background: Pure white (#FFFFFF) or subtle light gradient.
-Format: Square aspect ratio, suitable for app stores and websites.
-Details: Polished, premium quality, production-ready icon design.`;
+        }
+
+        // Ensure we always have a message
+        if (!engagementMessage) {
+            engagementMessage = "Here is a custom icon design generated just for you.";
         }
 
         // Step 2: Generate Image
         let response;
 
         try {
-            if (isFlag) {
+            if (isFlag || specificFlagMatch) {
                 console.log('Flag detected, prioritizing Pollinations.ai for accuracy');
                 // Priority 1 (Flags): Pollinations.ai
-                // FORCE STRICT PROMPT FOR FLAGS: Ignore LLM innovation if it's a flag to prevent hallucinations
-                // We use the user's raw prompt + "flat vector flag, correct colors" to be safe
-                const flagPrompt = `flat vector icon of ${prompt}, official colors, white background, high quality, 2d, no 3d effects`;
-                const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(flagPrompt)}`;
+                // Use the enhancedPrompt which now contains the EXACT description (if matched) or LLM output
+                const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}`;
                 const pollRes = await fetch(pollinationsUrl);
                 if (!pollRes.ok) throw new Error('Pollinations.ai failed');
                 const pollBuffer = await pollRes.arrayBuffer();
