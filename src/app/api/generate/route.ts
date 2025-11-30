@@ -102,9 +102,14 @@ CRITICAL RULES:
    - Always specify: "bold elegant typography, readable text, professional font"
    - Include the exact business name in quotes in the prompt
    - Add "text integrated seamlessly with icon"
-8. INNOVATE SURROUNDINGS: You can innovate on the *style* (glass, 3D, vector) or *background*, but NEVER change the core symbol/flag.
-9. ENGAGE: Write a 1-sentence friendly message to the user explaining why this design works.
-10. FORMAT: 
+8. SPELLING ACCURACY (CRITICAL FOR LOGOS):
+   - Extract the EXACT business name from the user's request letter-by-letter
+   - In your prompt, write: "text spelling: [BUSINESS NAME]" to ensure correct letters
+   - Example: For "Elite Cuts", write "text spelling: E-L-I-T-E C-U-T-S"
+   - NEVER change, abbreviate, or misspell the business name
+9. INNOVATE SURROUNDINGS: You can innovate on the *style* (glass, 3D, vector) or *background*, but NEVER change the core symbol/flag.
+10. ENGAGE: Write a 1-sentence friendly message to the user explaining why this design works.
+11. FORMAT: 
    Message: [Your warm message here]
    Prompt: [Raw prompt string here]
 
@@ -122,7 +127,7 @@ Prompt: App icon, blue rocket, flat vector style, minimal, vibrant blue, white b
 Input: "create a barber shop logo for Elite Cuts"
 Output:
 Message: I've designed a sharp, professional logo for Elite Cuts with classic barber elements and bold typography! ✂️💈
-Prompt: Professional logo design for "Elite Cuts" barber shop, vintage scissors and comb icon, bold elegant typography, readable text, black and gold color scheme, clean composition, balanced layout, vector style, scalable, professional branding, white background, high quality.
+Prompt: Professional logo design for "Elite Cuts" barber shop, text spelling: E-L-I-T-E C-U-T-S, vintage scissors and comb icon, bold elegant typography, readable text, black and gold color scheme, clean composition, balanced layout, vector style, scalable, professional branding, white background, high quality.
 
 Input: "${prompt}"
 Output: [/INST]`;
