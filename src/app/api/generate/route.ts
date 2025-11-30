@@ -33,18 +33,18 @@ Your goal is to refine the user's request into a Stable Diffusion XL prompt.
 User Request: "${prompt}"
 
 CRITICAL RULES:
-1. PRESERVE EXACT DETAILS: If the user specifies a color, object, or style, you MUST include it exactly.
-2. INNOVATE & ELEVATE: Unless a specific style is requested, infuse the design with unique, modern, and innovative aesthetics (e.g., dynamic lighting, glassmorphism, abstract geometry). Make it stand out.
-3. NO HALLUCINATIONS: Do not add objects or concepts not implied by the user.
-4. ENHANCE QUALITY: Add keywords like "high quality", "professional", "app icon", "trend-setting".
+1. KNOWN ENTITIES (FLAGS/LOGOS): If the user asks for a specific flag (e.g., UAE, USA) or known symbol, you MUST describe its EXACT colors and layout. (e.g., "UAE Flag: Red vertical stripe on left, Green top, White middle, Black bottom"). DO NOT innovate on the flag itself.
+2. PRESERVE EXACT DETAILS: If the user specifies a color, object, or style, you MUST include it exactly.
+3. INNOVATE SURROUNDINGS: You can innovate on the *style* (glass, 3D, vector) or *background*, but NEVER change the core symbol/flag.
+4. NO HALLUCINATIONS: Do not add objects or concepts not implied by the user.
 5. FORMAT: Output ONLY the raw prompt string.
 
 Examples:
+Input: "UAE Flag"
+Output: App icon, UAE Flag, Red vertical stripe on left, Green White Black horizontal stripes, correct colors, high quality, vector style, white background.
+
 Input: "Red cat"
 Output: App icon, red cat, innovative geometric style, dynamic lighting, vibrant red, translucent glass elements, high quality, white background.
-
-Input: "3D gold coin for crypto app"
-Output: App icon, 3D gold coin, crypto theme, futuristic holographic details, shiny, realistic lighting, levitating effect, high resolution, white background.
 
 Input: "${prompt}"
 Output: [/INST]`;
@@ -54,7 +54,7 @@ Output: [/INST]`;
                 inputs: researchPrompt,
                 parameters: {
                     max_new_tokens: 150,
-                    temperature: 0.4, // Slightly higher for creativity
+                    temperature: 0.2, // Lower temperature for accuracy
                     return_full_text: false,
                 }
             });
@@ -71,9 +71,9 @@ Output: [/INST]`;
 You are an expert prompt engineer.
 Refine the user's request into a Stable Diffusion XL prompt.
 CRITICAL RULES:
-1. PRESERVE EXACT DETAILS: If the user specifies a color, object, or style, you MUST include it exactly.
-2. INNOVATE: Infuse the design with unique, modern, and creative aesthetics unless a specific style is requested.
-3. NO HALLUCINATIONS: Do not add objects or concepts not implied by the user.
+1. KNOWN ENTITIES: If the user asks for a specific flag or symbol, describe its EXACT colors and layout. DO NOT change it.
+2. PRESERVE EXACT DETAILS: If the user specifies a color, object, or style, you MUST include it exactly.
+3. INNOVATE STYLE ONLY: Infuse the design with modern aesthetics but keep the core subject accurate.
 4. FORMAT: Output ONLY the raw prompt string.
 </s>
 <|user|>
