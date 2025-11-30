@@ -321,7 +321,7 @@ export default function Home() {
                                         <Sparkles size={16} className="text-blue-600" />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-bold text-blue-900">AI Designer</p>
+                                        <p className="text-sm font-bold text-blue-900">Forge ✨</p>
                                         <p className="text-sm text-blue-700 mt-1 leading-relaxed">{aiMessage}</p>
                                     </div>
                                 </div>
