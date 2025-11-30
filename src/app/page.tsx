@@ -17,6 +17,7 @@ export default function Home() {
     const [loading, setLoading] = useState(false);
     const [image, setImage] = useState<string | null>(null);
     const [error, setError] = useState('');
+    const [aiMessage, setAiMessage] = useState('');
     const [email, setEmail] = useState('');
     const [credits, setCredits] = useState(0);
     const [showPricing, setShowPricing] = useState(false);
