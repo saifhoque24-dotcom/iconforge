@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { InferenceClient } from '@huggingface/inference';
 import { getUserByEmail, saveIcon } from '@/lib/db';
@@ -25,6 +24,8 @@ export async function POST(req: Request) {
         // Step 1: "Research" and Expand Prompt using an LLM
         let enhancedPrompt = prompt;
         let engagementMessage = '';
+        const isFlag = prompt.toLowerCase().includes('flag');
+
         try {
             // Construct a structured prompt for Mistral-7B-Instruct
             const researchPrompt = `[INST] You are an expert brand designer.
@@ -81,8 +82,6 @@ Output: [/INST]`;
             }
         } catch (researchError) {
             console.error('Research step failed, falling back to template:', researchError);
-            // Fallback template (keep existing logic)
-            // ... (Zephyr fallback would need similar update, but keeping it simple for now)
             enhancedPrompt = `Professional app icon design: ${prompt}. 
 Style: Modern, clean, minimalist vector icon with smooth edges and perfect symmetry.
 Quality: Ultra high-definition, crisp details, professional grade.
@@ -92,176 +91,102 @@ Format: Square aspect ratio, suitable for app stores and websites.
 Details: Polished, premium quality, production-ready icon design.`;
         }
 
-        const researchResponse = await client.textGeneration({
-            model: 'HuggingFaceH4/zephyr-7b-beta',
-            inputs: researchPrompt,
-            parameters: {
-                max_new_tokens: 150,
-                temperature: 0.3,
-                return_full_text: false,
-            }
-        });
+        // Step 2: Generate Image
+        let response;
 
-        if (researchResponse.generated_text) {
-            enhancedPrompt = researchResponse.generated_text.trim();
-        }
-    } catch (zephyrError) {
-        // Fallback to template
-        enhancedPrompt = `Professional app icon design: ${prompt}. 
-Style: Modern, clean, minimalist vector icon with smooth edges and perfect symmetry.
-Quality: Ultra high-definition, crisp details, professional grade.
-Design: Centered composition, balanced proportions, subtle depth with soft shadows.
-Background: Pure white (#FFFFFF) or subtle light gradient.
-Format: Square aspect ratio, suitable for app stores and websites.
-Details: Polished, premium quality, production-ready icon design.`;
-    }
-}
-
-// Step 2: Generate Image
-let response;
-const isFlag = enhancedPrompt.toLowerCase().includes('flag');
-
-try {
-    if (isFlag) {
-        console.log('Flag detected, prioritizing Pollinations.ai for accuracy');
-        // Priority 1 (Flags): Pollinations.ai (Often better at exact common entities)
-        // We also force a simpler prompt for flags to avoid 3D distortion
-        const flagPrompt = enhancedPrompt.replace('innovative', 'flat').replace('3D', '2D').replace('dynamic lighting', 'flat lighting');
-        const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(flagPrompt)}`;
-        const pollRes = await fetch(pollinationsUrl);
-        if (!pollRes.ok) throw new Error('Pollinations.ai failed');
-        const pollBuffer = await pollRes.arrayBuffer();
-        response = new Blob([pollBuffer]);
-    } else {
-        // Priority 1 (General): SDXL (Best Artistic Quality)
-        response = await client.textToImage({
-            model: 'stabilityai/stable-diffusion-xl-base-1.0',
-            inputs: enhancedPrompt,
-        });
-    }
-} catch (primaryError) {
-    console.error('Primary model failed, trying fallback:', primaryError);
-    try {
-        // Priority 2: FLUX.1-schnell (Fast & Good Geometry)
-        response = await client.textToImage({
-            model: 'black-forest-labs/FLUX.1-schnell',
-            inputs: enhancedPrompt,
-        });
-    } catch (secondaryError) {
-        console.error('Secondary model failed, trying SDXL-Lightning:', secondaryError);
         try {
-            // Priority 3: SDXL-Lightning (ByteDance - Fast)
-            response = await client.textToImage({
-                model: 'ByteDance/SDXL-Lightning',
-                inputs: enhancedPrompt,
-            });
-        } catch (lightningError) {
-            console.error('Lightning failed, trying OpenJourney:', lightningError);
-            try {
-                // Priority 4: OpenJourney (Midjourney style - Reliable)
-                response = await client.textToImage({
-                    model: 'prompthero/openjourney',
-                    inputs: enhancedPrompt,
-                });
-            } catch (ojError) {
-                console.error('OpenJourney failed, using Pollinations.ai (Nuclear Option):', ojError);
-                // Priority 5: Pollinations.ai (Guaranteed Fallback)
-                const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}`;
+            if (isFlag) {
+                console.log('Flag detected, prioritizing Pollinations.ai for accuracy');
+                // Priority 1 (Flags): Pollinations.ai
+                // FORCE STRICT PROMPT FOR FLAGS: Ignore LLM innovation if it's a flag to prevent hallucinations
+                // We use the user's raw prompt + "flat vector flag, correct colors" to be safe
+                const flagPrompt = `flat vector icon of ${prompt}, official colors, white background, high quality, 2d, no 3d effects`;
+                const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(flagPrompt)}`;
                 const pollRes = await fetch(pollinationsUrl);
                 if (!pollRes.ok) throw new Error('Pollinations.ai failed');
                 const pollBuffer = await pollRes.arrayBuffer();
                 response = new Blob([pollBuffer]);
-            }
-        }
-    }
-}
-
-// Handle both HF response (Blob) and Pollinations response (Blob)
-let buffer;
-if (response instanceof Blob) {
-    buffer = await response.arrayBuffer();
-} else {
-    // HF Inference Client returns a specific object that acts like a Blob but might need casting
-    buffer = await (response as unknown as Blob).arrayBuffer();
-}
-
-const base64Image = Buffer.from(buffer).toString('base64');
-
             } else {
-    // Priority 1 (General): SDXL (Best Artistic Quality)
-    response = await client.textToImage({
-        model: 'stabilityai/stable-diffusion-xl-base-1.0',
-        inputs: enhancedPrompt,
-    });
-}
-        } catch (primaryError) {
-    console.error('Primary model failed, trying fallback:', primaryError);
-    try {
-        // Priority 2: FLUX.1-schnell (Fast & Good Geometry)
-        response = await client.textToImage({
-            model: 'black-forest-labs/FLUX.1-schnell',
-            inputs: enhancedPrompt,
-        });
-    } catch (secondaryError) {
-        console.error('Secondary model failed, trying SDXL-Lightning:', secondaryError);
-        try {
-            // Priority 3: SDXL-Lightning (ByteDance - Fast)
-            response = await client.textToImage({
-                model: 'ByteDance/SDXL-Lightning',
-                inputs: enhancedPrompt,
-            });
-        } catch (lightningError) {
-            console.error('Lightning failed, trying OpenJourney:', lightningError);
-            try {
-                // Priority 4: OpenJourney (Midjourney style - Reliable)
+                // Priority 1 (General): SDXL (Best Artistic Quality)
                 response = await client.textToImage({
-                    model: 'prompthero/openjourney',
+                    model: 'stabilityai/stable-diffusion-xl-base-1.0',
                     inputs: enhancedPrompt,
                 });
-            } catch (ojError) {
-                console.error('OpenJourney failed, using Pollinations.ai (Nuclear Option):', ojError);
-                // Priority 5: Pollinations.ai (Guaranteed Fallback)
-                const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}`;
-                const pollRes = await fetch(pollinationsUrl);
-                if (!pollRes.ok) throw new Error('Pollinations.ai failed');
-                const pollBuffer = await pollRes.arrayBuffer();
-                response = new Blob([pollBuffer]);
+            }
+        } catch (primaryError) {
+            console.error('Primary model failed, trying fallback:', primaryError);
+            try {
+                // Priority 2: FLUX.1-schnell (Fast & Good Geometry)
+                response = await client.textToImage({
+                    model: 'black-forest-labs/FLUX.1-schnell',
+                    inputs: enhancedPrompt,
+                });
+            } catch (secondaryError) {
+                console.error('Secondary model failed, trying SDXL-Lightning:', secondaryError);
+                try {
+                    // Priority 3: SDXL-Lightning (ByteDance - Fast)
+                    response = await client.textToImage({
+                        model: 'ByteDance/SDXL-Lightning',
+                        inputs: enhancedPrompt,
+                    });
+                } catch (lightningError) {
+                    console.error('Lightning failed, trying OpenJourney:', lightningError);
+                    try {
+                        // Priority 4: OpenJourney (Midjourney style - Reliable)
+                        response = await client.textToImage({
+                            model: 'prompthero/openjourney',
+                            inputs: enhancedPrompt,
+                        });
+                    } catch (ojError) {
+                        console.error('OpenJourney failed, using Pollinations.ai (Nuclear Option):', ojError);
+                        // Priority 5: Pollinations.ai (Guaranteed Fallback)
+                        const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}`;
+                        const pollRes = await fetch(pollinationsUrl);
+                        if (!pollRes.ok) throw new Error('Pollinations.ai failed');
+                        const pollBuffer = await pollRes.arrayBuffer();
+                        response = new Blob([pollBuffer]);
+                    }
+                }
             }
         }
-    }
-}
 
-// Handle both HF response (Blob) and Pollinations response (Blob)
-let buffer;
-if (response instanceof Blob) {
-    buffer = await response.arrayBuffer();
-} else {
-    // HF Inference Client returns a specific object that acts like a Blob but might need casting
-    buffer = await (response as unknown as Blob).arrayBuffer();
-}
+        // Handle both HF response (Blob) and Pollinations response (Blob)
+        let buffer;
+        if (response instanceof Blob) {
+            buffer = await response.arrayBuffer();
+        } else {
+            // HF Inference Client returns a specific object that acts like a Blob but might need casting
+            buffer = await (response as unknown as Blob).arrayBuffer();
+        }
 
-const base64Image = Buffer.from(buffer).toString('base64');
+        const base64Image = Buffer.from(buffer).toString('base64');
 
-// Save to database
-const user = await getUserByEmail(email);
-if (user) {
-    await saveIcon(user.id, prompt, base64Image);
-}
+        // Save to database
+        const user = await getUserByEmail(email);
+        if (user) {
+            await saveIcon(user.id, prompt, base64Image);
+        }
 
-return NextResponse.json({
-    image: base64Image,
-    message: engagementMessage
-});
+        return NextResponse.json({
+            image: base64Image,
+            message: engagementMessage
+        });
+
     } catch (error: any) {
-    return NextResponse.json({
-        error: 'High traffic - please try again in a few seconds.',
-        details: 'Our AI servers are currently busy.'
-    }, { status: 503 });
-}
+        console.error('Error generating icon:', error);
 
-return NextResponse.json({
-    error: 'Failed to generate icon',
-    details: error?.message || 'Unknown error'
-}, { status: 500 });
-}
+        // Check for rate limit errors specifically
+        const errorMessage = error?.message || '';
+        if (errorMessage.includes('rate limit') || errorMessage.includes('usage limit')) {
+            return NextResponse.json({
+                error: 'High traffic - please try again in a few seconds.',
+                details: 'Our AI servers are currently busy.'
+            }, { status: 503 });
+        }
+
+        return NextResponse.json({
+            error: 'Failed to generate icon',
+            details: error?.message || 'Unknown error'
+        }, { status: 500 });
+    }
 }

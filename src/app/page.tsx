@@ -120,7 +120,8 @@ export default function Home() {
         if (!prompt.trim()) return;
 
         // Check credits
-        if (credits <= 0) {
+        const creditsNeeded = 1;
+        if (credits < creditsNeeded) {
             setShowPricing(true);
             return;
         }
@@ -128,6 +129,7 @@ export default function Home() {
         setLoading(true);
         setError('');
         setImage(null);
+        setAiMessage('');
 
         try {
             // Deduct credit first
@@ -163,9 +165,17 @@ export default function Home() {
             }
 
             setImage(data.image);
+            if (data.message) setAiMessage(data.message);
             fetchIcons(); // Refresh gallery
         } catch (err: any) {
             setError(err.message);
+            // If generation fails, refund credits
+            await fetch('/api/credits', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, credits: -creditsNeeded }), // Add back credits
+            });
+            setCredits(prevCredits => prevCredits + creditsNeeded);
         } finally {
             setLoading(false);
         }
