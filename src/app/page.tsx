@@ -364,8 +364,8 @@ export default function Home() {
                                     onClick={(e) => generateIcon(e, true)}
                                     disabled={regenerationsLeft <= 0 && !issueReported}
                                     className={`flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all ${(regenerationsLeft > 0 || issueReported)
-                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                         }`}
                                 >
                                     <Sparkles size={18} />
@@ -376,7 +376,7 @@ export default function Home() {
                                             : 'No tries left'}
                                 </button>
                             </div>
-                            {!issueReported && regenerationsLeft <= 0 && (
+                            {!issueReported && (
                                 <button
                                     onClick={() => {
                                         setIssueReported(true);
@@ -384,7 +384,7 @@ export default function Home() {
                                     }}
                                     className="w-full mt-3 flex items-center justify-center gap-2 bg-orange-500 text-white py-3 rounded-xl font-medium hover:bg-orange-600 transition-all"
                                 >
-                                    ⚠️ Report Issue (Get Unlimited Tries)
+                                    ⚠️ Report Issue (Wrong spelling/design? Get unlimited tries!)
                                 </button>
                             )}
                             {issueReported && (
