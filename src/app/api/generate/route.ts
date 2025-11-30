@@ -116,7 +116,7 @@ Output: [/INST]`;
                 console.log('Flag detected, prioritizing Pollinations.ai for accuracy');
                 // Priority 1 (Flags): Pollinations.ai
                 // Use the enhancedPrompt which now contains the EXACT description (if matched) or LLM output
-                const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}`;
+                const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?nologo=true`;
                 const pollRes = await fetch(pollinationsUrl);
                 if (!pollRes.ok) throw new Error('Pollinations.ai failed');
                 const pollBuffer = await pollRes.arrayBuffer();
@@ -155,7 +155,7 @@ Output: [/INST]`;
                     } catch (ojError) {
                         console.error('OpenJourney failed, using Pollinations.ai (Nuclear Option):', ojError);
                         // Priority 5: Pollinations.ai (Guaranteed Fallback)
-                        const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}`;
+                        const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?nologo=true`;
                         const pollRes = await fetch(pollinationsUrl);
                         if (!pollRes.ok) throw new Error('Pollinations.ai failed');
                         const pollBuffer = await pollRes.arrayBuffer();
