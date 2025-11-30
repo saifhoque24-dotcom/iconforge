@@ -33,7 +33,8 @@ Your goal is to refine the user's request into a Stable Diffusion XL prompt.
 User Request: "${prompt}"
 
 CRITICAL RULES:
-1. KNOWN ENTITIES (FLAGS/LOGOS): If the user asks for a specific flag (e.g., UAE, USA) or known symbol, you MUST describe its EXACT colors and layout. (e.g., "UAE Flag: Red vertical stripe on left, Green top, White middle, Black bottom"). DO NOT innovate on the flag itself.
+1. KNOWN ENTITIES (FLAGS/LOGOS): If the user asks for a specific flag (e.g., UAE, USA), you MUST describe its EXACT layout.
+   - UAE Flag: "Official Flag of United Arab Emirates, Red vertical band on hoist (left), Green (top), White (middle), Black (bottom) horizontal bands."
 2. PRESERVE EXACT DETAILS: If the user specifies a color, object, or style, you MUST include it exactly.
 3. INNOVATE SURROUNDINGS: You can innovate on the *style* (glass, 3D, vector) or *background*, but NEVER change the core symbol/flag.
 4. NO HALLUCINATIONS: Do not add objects or concepts not implied by the user.
@@ -41,7 +42,7 @@ CRITICAL RULES:
 
 Examples:
 Input: "UAE Flag"
-Output: App icon, UAE Flag, Red vertical stripe on left, Green White Black horizontal stripes, correct colors, high quality, vector style, white background.
+Output: App icon, Official Flag of United Arab Emirates, Red vertical band on left, Green top band, White middle band, Black bottom band, correct colors, flat vector style, white background.
 
 Input: "Red cat"
 Output: App icon, red cat, innovative geometric style, dynamic lighting, vibrant red, translucent glass elements, high quality, white background.
@@ -108,22 +109,34 @@ Details: Polished, premium quality, production-ready icon design.`;
 
         // Step 2: Generate Image
         let response;
+        const isFlag = enhancedPrompt.toLowerCase().includes('flag');
+
         try {
-            // Priority 1: SDXL (Best Quality)
-            response = await client.textToImage({
-                model: 'stabilityai/stable-diffusion-xl-base-1.0',
-                inputs: enhancedPrompt,
-            });
-        } catch (sdxlError) {
-            console.error('SDXL failed, trying FLUX:', sdxlError);
-            try {
-                // Priority 2: FLUX.1-schnell (Fast & Free)
+            if (isFlag) {
+                console.log('Flag detected, prioritizing FLUX for accuracy');
+                // Priority 1 (Flags): FLUX.1-schnell (Better at spatial adherence/geometry)
                 response = await client.textToImage({
                     model: 'black-forest-labs/FLUX.1-schnell',
                     inputs: enhancedPrompt,
                 });
-            } catch (fluxError) {
-                console.error('FLUX failed, trying SDXL-Lightning:', fluxError);
+            } else {
+                // Priority 1 (General): SDXL (Best Artistic Quality)
+                response = await client.textToImage({
+                    model: 'stabilityai/stable-diffusion-xl-base-1.0',
+                    inputs: enhancedPrompt,
+                });
+            }
+        } catch (primaryError) {
+            console.error('Primary model failed, trying fallback:', primaryError);
+            try {
+                // Priority 2: Swap models based on what failed
+                const fallbackModel = isFlag ? 'stabilityai/stable-diffusion-xl-base-1.0' : 'black-forest-labs/FLUX.1-schnell';
+                response = await client.textToImage({
+                    model: fallbackModel,
+                    inputs: enhancedPrompt,
+                });
+            } catch (secondaryError) {
+                console.error('Secondary model failed, trying SDXL-Lightning:', secondaryError);
                 try {
                     // Priority 3: SDXL-Lightning (ByteDance - Fast)
                     response = await client.textToImage({
@@ -141,12 +154,10 @@ Details: Polished, premium quality, production-ready icon design.`;
                     } catch (ojError) {
                         console.error('OpenJourney failed, using Pollinations.ai (Nuclear Option):', ojError);
                         // Priority 5: Pollinations.ai (Guaranteed Fallback)
-                        // This API is free, unlimited, and doesn't use HF Inference Client
                         const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}`;
                         const pollRes = await fetch(pollinationsUrl);
                         if (!pollRes.ok) throw new Error('Pollinations.ai failed');
                         const pollBuffer = await pollRes.arrayBuffer();
-                        // Mock the response object expected by the next step
                         response = new Blob([pollBuffer]);
                     }
                 }
