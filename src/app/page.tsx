@@ -27,6 +27,8 @@ export default function Home() {
     const [regenerationsLeft, setRegenerationsLeft] = useState(1);
     const [issueReported, setIssueReported] = useState(false);
     const [issueTries, setIssueTries] = useState(0);
+    const [overlayText, setOverlayText] = useState('');
+    const [canvasRef, setCanvasRef] = useState<HTMLCanvasElement | null>(null);
 
     useEffect(() => {
         // Load Revolut Checkout SDK
@@ -90,10 +92,12 @@ export default function Home() {
         }
     };
 
-    const downloadIcon = (imageData: string, prompt: string) => {
+    const downloadIcon = (canvasElement: HTMLCanvasElement | null, prompt: string) => {
+        if (!canvasElement) return;
+
         const link = document.createElement('a');
-        link.href = `data:image/png;base64,${imageData}`;
-        link.download = `${prompt.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
+        link.download = `${prompt.slice(0, 30).replace(/[^a-z0-9]/gi, '_')}.png`;
+        link.href = canvasElement.toDataURL('image/png');
         link.click();
     };
 
@@ -341,12 +345,61 @@ export default function Home() {
 
                     {image && (
                         <div className="max-w-md mx-auto bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
-                            <div className="w-64 h-64 mx-auto relative rounded-xl overflow-hidden bg-gray-50 mb-6 flex items-center justify-center">
-                                <img
-                                    src={`data:image/png;base64,${image}`}
-                                    alt="Generated Icon"
-                                    className="w-full h-full object-contain"
+                            <div className="w-64 h-64 mx-auto relative rounded-xl overflow-hidden bg-gray-50 mb-4 flex items-center justify-center">
+                                <canvas
+                                    ref={(canvas) => {
+                                        if (canvas && image) {
+                                            setCanvasRef(canvas);
+                                            const ctx = canvas.getContext('2d');
+                                            const img = new Image();
+                                            img.onload = () => {
+                                                canvas.width = 256;
+                                                canvas.height = 256;
+                                                ctx?.drawImage(img, 0, 0, 256, 256);
+
+                                                // Draw text overlay if provided
+                                                if (overlayText && ctx) {
+                                                    ctx.font = 'bold 24px Inter, sans-serif';
+                                                    ctx.fillStyle = '#000000';
+                                                    ctx.textAlign = 'center';
+                                                    ctx.textBaseline = 'bottom';
+
+                                                    // Add white background for text
+                                                    const textMetrics = ctx.measureText(overlayText);
+                                                    const textWidth = textMetrics.width;
+                                                    const textHeight = 30;
+                                                    const x = 128;
+                                                    const y = 240;
+
+                                                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                                                    ctx.fillRect(x - textWidth / 2 - 10, y - textHeight, textWidth + 20, textHeight + 10);
+
+                                                    ctx.fillStyle = '#000000';
+                                                    ctx.fillText(overlayText, x, y);
+                                                }
+                                            };
+                                            img.src = `data:image/png;base64,${image}`;
+                                        }
+                                    }}
+                                    className="w-full h-full"
+                                    key={overlayText} // Force re-render when text changes
                                 />
+                            </div>
+
+                            {/* Text Input */}
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Add Text (Optional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={overlayText}
+                                    onChange={(e) => setOverlayText(e.target.value)}
+                                    placeholder="e.g., Elite Cuts"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-black focus:border-transparent"
+                                    maxLength={20}
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Text will appear at the bottom of your icon</p>
                             </div>
 
                             {aiMessage && (
@@ -363,7 +416,7 @@ export default function Home() {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <button
-                                    onClick={() => downloadIcon(image, prompt)}
+                                    onClick={() => downloadIcon(canvasRef, prompt)}
                                     className="flex items-center justify-center gap-2 bg-black text-white py-3 rounded-xl font-medium hover:bg-gray-800 transition-all"
                                 >
                                     <Download size={18} />
@@ -373,8 +426,8 @@ export default function Home() {
                                     onClick={(e) => generateIcon(e, true)}
                                     disabled={(regenerationsLeft <= 0 && !issueReported) || (issueReported && issueTries >= 5)}
                                     className={`flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all ${(regenerationsLeft > 0 || (issueReported && issueTries < 5))
-                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                         }`}
                                 >
                                     <Sparkles size={18} />
@@ -385,23 +438,21 @@ export default function Home() {
                                             : 'No tries left'}
                                 </button>
                             </div>
-                            {!issueReported && (
+                            {!issueReported && regenerationsLeft <= 0 && (
                                 <button
                                     onClick={() => {
                                         setIssueReported(true);
                                         setError('');
                                     }}
-                                    className="w-full mt-3 flex items-center justify-center gap-2 bg-orange-500 text-white py-3 rounded-xl font-medium hover:bg-orange-600 transition-all"
+                                    className="mt-4 text-xs text-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center gap-1 mx-auto underline"
                                 >
-                                    ⚠️ Report Issue (Wrong spelling/design? Get 5 more tries!)
+                                    Report Issue
                                 </button>
                             )}
                             {issueReported && (
-                                <div className="mt-3 p-3 bg-orange-50 rounded-xl border border-orange-200 text-center">
-                                    <p className="text-sm text-orange-700 font-medium">
-                                        🛠️ Issue mode active - {5 - issueTries} free regenerations remaining
-                                    </p>
-                                </div>
+                                <p className="mt-3 text-xs text-orange-600 text-center font-medium">
+                                    Issue mode: {5 - issueTries} free tries left
+                                </p>
                             )}
                             <button
                                 onClick={() => {
