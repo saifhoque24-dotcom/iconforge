@@ -350,8 +350,16 @@ export default function Home() {
                     )}
 
                     {loading && (
-                        <div className="flex justify-center">
-                            <IconDisplay image={null} loading={true} />
+                        <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
+                            <div className="aspect-square bg-gray-50 rounded-xl animate-pulse flex flex-col items-center justify-center mb-6">
+                                <div className="w-12 h-12 bg-gray-200 rounded-full mb-4 animate-bounce"></div>
+                                <p className="text-gray-400 font-medium">Generating your icon...</p>
+                            </div>
+                            <div className="h-20 bg-gray-50 rounded-xl animate-pulse mb-6"></div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="h-12 bg-gray-50 rounded-xl animate-pulse"></div>
+                                <div className="h-12 bg-gray-50 rounded-xl animate-pulse"></div>
+                            </div>
                         </div>
                     )}
                 </div>
