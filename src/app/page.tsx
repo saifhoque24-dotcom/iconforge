@@ -25,6 +25,7 @@ export default function Home() {
     const [icons, setIcons] = useState<any[]>([]);
     const [showGallery, setShowGallery] = useState(false);
     const [regenerationsLeft, setRegenerationsLeft] = useState(1);
+    const [issueReported, setIssueReported] = useState(false);
 
     useEffect(() => {
         // Load Revolut Checkout SDK
@@ -121,9 +122,9 @@ export default function Home() {
         e.preventDefault();
         if (!prompt.trim()) return;
 
-        // Check regeneration limit
-        if (isRegenerate && regenerationsLeft <= 0) {
-            setError('No free regenerations left. Start a new prompt or download this one!');
+        // Check regeneration limit (bypass if issue reported)
+        if (isRegenerate && regenerationsLeft <= 0 && !issueReported) {
+            setError('No free regenerations left. Report an issue if something is wrong, or start a new prompt!');
             return;
         }
 
@@ -159,8 +160,12 @@ export default function Home() {
                 const creditData = await creditRes.json();
                 setCredits(creditData.credits);
                 setRegenerationsLeft(1); // Reset to 1 regeneration for new prompt
+                setIssueReported(false); // Reset issue flag
             } else {
-                setRegenerationsLeft(prev => prev - 1); // Decrement for regeneration
+                // Only decrement if no issue reported (unlimited tries when issue exists)
+                if (!issueReported) {
+                    setRegenerationsLeft(prev => prev - 1);
+                }
             }
 
             // Generate icon with random seed for variation
@@ -357,16 +362,38 @@ export default function Home() {
                                 </button>
                                 <button
                                     onClick={(e) => generateIcon(e, true)}
-                                    disabled={regenerationsLeft <= 0}
-                                    className={`flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all ${regenerationsLeft > 0
-                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    disabled={regenerationsLeft <= 0 && !issueReported}
+                                    className={`flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all ${(regenerationsLeft > 0 || issueReported)
+                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                         }`}
                                 >
                                     <Sparkles size={18} />
-                                    {regenerationsLeft > 0 ? `Try Again (${regenerationsLeft} left)` : 'No tries left'}
+                                    {issueReported
+                                        ? 'Try Again (Unlimited)'
+                                        : regenerationsLeft > 0
+                                            ? `Try Again (${regenerationsLeft} left)`
+                                            : 'No tries left'}
                                 </button>
                             </div>
+                            {!issueReported && regenerationsLeft <= 0 && (
+                                <button
+                                    onClick={() => {
+                                        setIssueReported(true);
+                                        setError('');
+                                    }}
+                                    className="w-full mt-3 flex items-center justify-center gap-2 bg-orange-500 text-white py-3 rounded-xl font-medium hover:bg-orange-600 transition-all"
+                                >
+                                    ⚠️ Report Issue (Get Unlimited Tries)
+                                </button>
+                            )}
+                            {issueReported && (
+                                <div className="mt-3 p-3 bg-orange-50 rounded-xl border border-orange-200 text-center">
+                                    <p className="text-sm text-orange-700 font-medium">
+                                        🛠️ Issue mode active - Unlimited free regenerations until fixed!
+                                    </p>
+                                </div>
+                            )}
                             <button
                                 onClick={() => {
                                     setImage(null);
