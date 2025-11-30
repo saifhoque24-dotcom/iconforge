@@ -24,6 +24,7 @@ export default function Home() {
     const [hasEmail, setHasEmail] = useState(false);
     const [icons, setIcons] = useState<any[]>([]);
     const [showGallery, setShowGallery] = useState(false);
+    const [regenerationsLeft, setRegenerationsLeft] = useState(3);
 
     useEffect(() => {
         // Load Revolut Checkout SDK
@@ -120,6 +121,12 @@ export default function Home() {
         e.preventDefault();
         if (!prompt.trim()) return;
 
+        // Check regeneration limit
+        if (isRegenerate && regenerationsLeft <= 0) {
+            setError('No free regenerations left. Start a new prompt or download this one!');
+            return;
+        }
+
         // Check credits (skip if regenerating)
         const creditsNeeded = isRegenerate ? 0 : 1;
         if (!isRegenerate && credits < 1) {
@@ -151,6 +158,9 @@ export default function Home() {
 
                 const creditData = await creditRes.json();
                 setCredits(creditData.credits);
+                setRegenerationsLeft(3); // Reset regenerations for new prompt
+            } else {
+                setRegenerationsLeft(prev => prev - 1); // Decrement for regeneration
             }
 
             // Generate icon with random seed for variation
@@ -184,6 +194,8 @@ export default function Home() {
                     body: JSON.stringify({ email, credits: -1 }), // Add back credits
                 });
                 setCredits(prevCredits => prevCredits + 1);
+            } else {
+                setRegenerationsLeft(prev => prev + 1); // Restore regeneration if failed
             }
         } finally {
             setLoading(false);
@@ -345,10 +357,14 @@ export default function Home() {
                                 </button>
                                 <button
                                     onClick={(e) => generateIcon(e, true)}
-                                    className="flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-all"
+                                    disabled={regenerationsLeft <= 0}
+                                    className={`flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all ${regenerationsLeft > 0
+                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        }`}
                                 >
                                     <Sparkles size={18} />
-                                    Try Again (Free)
+                                    {regenerationsLeft > 0 ? `Try Again (${regenerationsLeft} left)` : 'No tries left'}
                                 </button>
                             </div>
                             <button
