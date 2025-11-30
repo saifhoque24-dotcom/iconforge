@@ -116,13 +116,13 @@ export default function Home() {
         }
     };
 
-    const generateIcon = async (e: React.FormEvent) => {
+    const generateIcon = async (e: React.FormEvent, isRegenerate: boolean = false) => {
         e.preventDefault();
         if (!prompt.trim()) return;
 
-        // Check credits
-        const creditsNeeded = 1;
-        if (credits < creditsNeeded) {
+        // Check credits (skip if regenerating)
+        const creditsNeeded = isRegenerate ? 0 : 1;
+        if (!isRegenerate && credits < 1) {
             setShowPricing(true);
             return;
         }
@@ -133,29 +133,35 @@ export default function Home() {
         setAiMessage('');
 
         try {
-            // Deduct credit first
-            const creditRes = await fetch('/api/credits', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email }),
-            });
+            // Deduct credit only if not regenerating
+            if (!isRegenerate) {
+                const creditRes = await fetch('/api/credits', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email }),
+                });
 
-            if (!creditRes.ok) {
-                if (creditRes.status === 402) {
-                    setShowPricing(true);
-                    return;
+                if (!creditRes.ok) {
+                    if (creditRes.status === 402) {
+                        setShowPricing(true);
+                        return;
+                    }
+                    throw new Error('Failed to deduct credit');
                 }
-                throw new Error('Failed to deduct credit');
+
+                const creditData = await creditRes.json();
+                setCredits(creditData.credits);
             }
 
-            const creditData = await creditRes.json();
-            setCredits(creditData.credits);
-
-            // Generate icon
+            // Generate icon with random seed for variation
             const res = await fetch('/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt, email }),
+                body: JSON.stringify({
+                    prompt,
+                    email,
+                    seed: Math.floor(Math.random() * 1000000) // Random seed for variation
+                }),
             });
 
             const data = await res.json();
@@ -167,16 +173,18 @@ export default function Home() {
 
             setImage(data.image);
             if (data.message) setAiMessage(data.message);
-            fetchIcons(); // Refresh gallery
+            if (!isRegenerate) fetchIcons(); // Only refresh gallery for new generations
         } catch (err: any) {
             setError(err.message);
-            // If generation fails, refund credits
-            await fetch('/api/credits', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, credits: -creditsNeeded }), // Add back credits
-            });
-            setCredits(prevCredits => prevCredits + creditsNeeded);
+            // If generation fails, refund credits (only if we deducted them)
+            if (!isRegenerate) {
+                await fetch('/api/credits', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, credits: -1 }), // Add back credits
+                });
+                setCredits(prevCredits => prevCredits + 1);
+            }
         } finally {
             setLoading(false);
         }
@@ -336,16 +344,23 @@ export default function Home() {
                                     Download
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        setImage(null);
-                                        setPrompt('');
-                                        setAiMessage('');
-                                    }}
-                                    className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition-all"
+                                    onClick={(e) => generateIcon(e, true)}
+                                    className="flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-all"
                                 >
-                                    Create New
+                                    <Sparkles size={18} />
+                                    Try Again (Free)
                                 </button>
                             </div>
+                            <button
+                                onClick={() => {
+                                    setImage(null);
+                                    setPrompt('');
+                                    setAiMessage('');
+                                }}
+                                className="w-full mt-3 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition-all"
+                            >
+                                Create New
+                            </button>
                         </div>
                     )}
 
