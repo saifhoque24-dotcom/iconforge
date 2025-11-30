@@ -305,29 +305,53 @@ export default function Home() {
                         </div>
                     )}
 
-                    <div className="flex justify-center">
-                        <IconDisplay image={image} loading={loading} />
-                    </div>
-
                     {image && (
-                        <div className="flex justify-center mt-4">
-                            <button
-                                onClick={() => downloadIcon(image, prompt)}
-                                className="bg-black text-white px-6 py-3 rounded-xl font-medium hover:bg-gray-800 transition-all"
-                            >
-                                Download Icon
-                            </button>
+                        <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 animate-in fade-in zoom-in duration-300">
+                            <div className="aspect-square relative rounded-xl overflow-hidden bg-gray-50 mb-6 flex items-center justify-center">
+                                <img
+                                    src={`data:image/png;base64,${image}`}
+                                    alt="Generated Icon"
+                                    className="w-full h-full object-contain"
+                                />
+                            </div>
+
+                            {aiMessage && (
+                                <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100 flex gap-3 items-start text-left">
+                                    <div className="bg-blue-100 p-2 rounded-full shrink-0">
+                                        <Sparkles size={16} className="text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-blue-900">AI Designer</p>
+                                        <p className="text-sm text-blue-700 mt-1 leading-relaxed">{aiMessage}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    onClick={() => downloadIcon(image, prompt)}
+                                    className="flex items-center justify-center gap-2 bg-black text-white py-3 rounded-xl font-medium hover:bg-gray-800 transition-all"
+                                >
+                                    <Download size={18} />
+                                    Download
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setImage(null);
+                                        setPrompt('');
+                                        setAiMessage('');
+                                    }}
+                                    className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition-all"
+                                >
+                                    Create New
+                                </button>
+                            </div>
                         </div>
                     )}
 
-                    {image && (
-                        <div className="flex justify-center mt-4">
-                            <button
-                                onClick={() => downloadIcon(image, prompt)}
-                                className="bg-black text-white px-6 py-3 rounded-xl font-medium hover:bg-gray-800 transition-all"
-                            >
-                                Download Icon
-                            </button>
+                    {loading && (
+                        <div className="flex justify-center">
+                            <IconDisplay image={null} loading={true} />
                         </div>
                     )}
                 </div>
