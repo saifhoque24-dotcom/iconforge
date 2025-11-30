@@ -306,8 +306,8 @@ export default function Home() {
                     )}
 
                     {image && (
-                        <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
-                            <div className="aspect-square relative rounded-xl overflow-hidden bg-gray-50 mb-6 flex items-center justify-center">
+                        <div className="max-w-md mx-auto bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
+                            <div className="w-64 h-64 mx-auto relative rounded-xl overflow-hidden bg-gray-50 mb-6 flex items-center justify-center">
                                 <img
                                     src={`data:image/png;base64,${image}`}
                                     alt="Generated Icon"
@@ -350,8 +350,8 @@ export default function Home() {
                     )}
 
                     {loading && (
-                        <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
-                            <div className="aspect-square bg-gray-50 rounded-xl animate-pulse flex flex-col items-center justify-center mb-6">
+                        <div className="max-w-md mx-auto bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
+                            <div className="w-64 h-64 mx-auto bg-gray-50 rounded-xl animate-pulse flex flex-col items-center justify-center mb-6">
                                 <div className="w-12 h-12 bg-gray-200 rounded-full mb-4 animate-bounce"></div>
                                 <p className="text-gray-400 font-medium">Generating your icon...</p>
                             </div>
