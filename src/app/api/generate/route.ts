@@ -22,12 +22,27 @@ export async function POST(req: Request) {
         const client = new InferenceClient(apiKey);
 
         // Hardcoded descriptions for difficult flags to ensure 100% accuracy
-        const FLAG_MAP: Record<string, string> = {
-            'uae': 'Official Flag of United Arab Emirates, Red vertical band on hoist (left), Green (top), White (middle), Black (bottom) horizontal bands, flat vector, 2d, white background',
-            'united arab emirates': 'Official Flag of United Arab Emirates, Red vertical band on hoist (left), Green (top), White (middle), Black (bottom) horizontal bands, flat vector, 2d, white background',
-            'usa': 'Flag of United States, Stars and Stripes, Red and White horizontal stripes, Blue canton with white stars in top left, flat vector, 2d',
-            'america': 'Flag of United States, Stars and Stripes, Red and White horizontal stripes, Blue canton with white stars in top left, flat vector, 2d',
-            'uk': 'Union Jack Flag, United Kingdom, Red Cross of St George, Saltire of St Andrew, Saltire of St Patrick, correct layout, flat vector, 2d',
+        const FLAG_MAP: Record<string, { prompt: string, message: string }> = {
+            'uae': {
+                prompt: 'Official Flag of United Arab Emirates, Red vertical band on hoist (left), Green (top), White (middle), Black (bottom) horizontal bands, flat vector, 2d, white background',
+                message: "I've crafted a precise vector of the UAE flag for you, keeping the official colors and layout exactly right! 🇦🇪"
+            },
+            'united arab emirates': {
+                prompt: 'Official Flag of United Arab Emirates, Red vertical band on hoist (left), Green (top), White (middle), Black (bottom) horizontal bands, flat vector, 2d, white background',
+                message: "I've crafted a precise vector of the UAE flag for you, keeping the official colors and layout exactly right! 🇦🇪"
+            },
+            'usa': {
+                prompt: 'Flag of United States, Stars and Stripes, Red and White horizontal stripes, Blue canton with white stars in top left, flat vector, 2d',
+                message: "Here's the Star-Spangled Banner! I made sure the stripes and stars are perfectly aligned for a classic look. 🇺🇸"
+            },
+            'america': {
+                prompt: 'Flag of United States, Stars and Stripes, Red and White horizontal stripes, Blue canton with white stars in top left, flat vector, 2d',
+                message: "Here's the Star-Spangled Banner! I made sure the stripes and stars are perfectly aligned for a classic look. 🇺🇸"
+            },
+            'uk': {
+                prompt: 'Union Jack Flag, United Kingdom, Red Cross of St George, Saltire of St Andrew, Saltire of St Patrick, correct layout, flat vector, 2d',
+                message: "I've generated a crisp Union Jack for you, ensuring all the crosses are correctly positioned. Cheers! 🇬🇧"
+            },
         };
 
         // Step 1: "Research" and Expand Prompt
@@ -40,8 +55,8 @@ export async function POST(req: Request) {
         let specificFlagMatch = false;
         for (const [key, value] of Object.entries(FLAG_MAP)) {
             if (lowerPrompt.includes(key)) {
-                enhancedPrompt = value;
-                engagementMessage = `I've used a strictly verified template for the ${key.toUpperCase()} flag to ensure geometric accuracy.`;
+                enhancedPrompt = value.prompt;
+                engagementMessage = value.message;
                 specificFlagMatch = true;
                 break;
             }
@@ -51,24 +66,30 @@ export async function POST(req: Request) {
         if (!specificFlagMatch) {
             try {
                 // Construct a structured prompt for Mistral-7B-Instruct
-                const researchPrompt = `[INST] You are an expert brand designer.
-Your goal is to refine the user's request into a Stable Diffusion XL prompt AND write a short, engaging message to the user explaining your design choice.
+                const researchPrompt = `[INST] You are a friendly, enthusiastic expert brand designer.
+Your goal is to refine the user's request into a Stable Diffusion XL prompt AND write a warm, human-like message to the user explaining your design choice.
 
 User Request: "${prompt}"
 
 CRITICAL RULES:
-1. PRESERVE EXACT DETAILS: If the user specifies a color, object, or style, you MUST include it exactly.
-2. INNOVATE SURROUNDINGS: You can innovate on the *style* (glass, 3D, vector) or *background*, but NEVER change the core symbol/flag.
-3. ENGAGE: Write a 1-sentence friendly message to the user explaining why this design works.
-4. FORMAT: 
-   Message: [Your message here]
+1. TONE: Be warm, friendly, and enthusiastic! Use emojis if appropriate. Avoid robotic language.
+2. PRESERVE EXACT DETAILS: If the user specifies a color, object, or style, you MUST include it exactly.
+3. INNOVATE SURROUNDINGS: You can innovate on the *style* (glass, 3D, vector) or *background*, but NEVER change the core symbol/flag.
+4. ENGAGE: Write a 1-sentence friendly message to the user explaining why this design works.
+5. FORMAT: 
+   Message: [Your warm message here]
    Prompt: [Raw prompt string here]
 
 Examples:
 Input: "Red cat"
 Output: 
-Message: I went with a geometric glass style for the red cat to give it a modern, tech-forward vibe!
+Message: I went with a super cute geometric glass style for your red cat to give it a modern, friendly vibe! 🐱✨
 Prompt: App icon, red cat, innovative geometric style, dynamic lighting, vibrant red, translucent glass elements, high quality, white background.
+
+Input: "Blue rocket"
+Output: 
+Message: Blast off! 🚀 I designed a sleek, flat blue rocket that will look amazing on any home screen.
+Prompt: App icon, blue rocket, flat vector style, minimal, vibrant blue, white background, high quality.
 
 Input: "${prompt}"
 Output: [/INST]`;
@@ -78,7 +99,7 @@ Output: [/INST]`;
                     inputs: researchPrompt,
                     parameters: {
                         max_new_tokens: 200,
-                        temperature: 0.4,
+                        temperature: 0.7, // Slightly higher for more creativity/warmth
                         return_full_text: false,
                     }
                 });
@@ -99,13 +120,13 @@ Output: [/INST]`;
             } catch (researchError) {
                 console.error('Research step failed, falling back to template:', researchError);
                 enhancedPrompt = `Professional app icon design: ${prompt}. Style: Modern, clean, minimalist vector icon.`;
-                engagementMessage = "I've created a clean, professional design based on your request.";
+                engagementMessage = "I've whipped up a clean, professional design just for you! Hope you like it. ✨";
             }
         }
 
         // Ensure we always have a message
         if (!engagementMessage) {
-            engagementMessage = "Here is a custom icon design generated just for you.";
+            engagementMessage = "Here's a custom icon design I made just for you! Let me know what you think.";
         }
 
         // Step 2: Generate Image
