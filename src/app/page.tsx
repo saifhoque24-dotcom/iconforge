@@ -316,8 +316,8 @@ export default function Home() {
                             </div>
 
                             {aiMessage && (
-                                <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100 flex gap-3 items-start text-left">
-                                    <div className="bg-blue-100 p-2 rounded-full shrink-0">
+                                <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100 flex gap-3 items-center text-left min-h-20">
+                                    <div className="bg-blue-100 p-2 rounded-full shrink-0 self-start">
                                         <Sparkles size={16} className="text-blue-600" />
                                     </div>
                                     <div>
