@@ -194,3 +194,13 @@ export async function logUsage(userId: number, prompt: string) {
     VALUES (${userId}, ${prompt})
   `;
 }
+
+export async function getRecentFavorites(userId: number, limit: number = 3) {
+  const result = await sql`
+    SELECT prompt FROM icons 
+    WHERE user_id = ${userId} AND is_favorite = TRUE
+    ORDER BY created_at DESC
+    LIMIT ${limit}
+  `;
+  return result.rows.map(row => row.prompt);
+}
