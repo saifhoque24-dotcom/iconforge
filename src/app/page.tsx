@@ -26,6 +26,7 @@ export default function Home() {
     const [showGallery, setShowGallery] = useState(false);
     const [regenerationsLeft, setRegenerationsLeft] = useState(1);
     const [issueReported, setIssueReported] = useState(false);
+    const [issueTries, setIssueTries] = useState(0);
 
     useEffect(() => {
         // Load Revolut Checkout SDK
@@ -122,8 +123,8 @@ export default function Home() {
         e.preventDefault();
         if (!prompt.trim()) return;
 
-        // Check regeneration limit (bypass if issue reported)
-        if (isRegenerate && regenerationsLeft <= 0 && !issueReported) {
+        // Check regeneration limit (5 tries when issue reported, otherwise 1)
+        if (isRegenerate && regenerationsLeft <= 0 && (!issueReported || issueTries >= 5)) {
             setError('No free regenerations left. Report an issue if something is wrong, or start a new prompt!');
             return;
         }
@@ -161,9 +162,12 @@ export default function Home() {
                 setCredits(creditData.credits);
                 setRegenerationsLeft(1); // Reset to 1 regeneration for new prompt
                 setIssueReported(false); // Reset issue flag
+                setIssueTries(0); // Reset issue tries
             } else {
-                // Only decrement if no issue reported (unlimited tries when issue exists)
-                if (!issueReported) {
+                // Track issue tries separately
+                if (issueReported) {
+                    setIssueTries(prev => prev + 1);
+                } else {
                     setRegenerationsLeft(prev => prev - 1);
                 }
             }
@@ -191,7 +195,7 @@ export default function Home() {
             if (!isRegenerate) fetchIcons(); // Only refresh gallery for new generations
         } catch (err: any) {
             setError(err.message);
-            // If generation fails, refund credits (only if we deducted them)
+            // If generation fails, refund credits/tries
             if (!isRegenerate) {
                 await fetch('/api/credits', {
                     method: 'POST',
@@ -200,7 +204,12 @@ export default function Home() {
                 });
                 setCredits(prevCredits => prevCredits + 1);
             } else {
-                setRegenerationsLeft(prev => prev + 1); // Restore regeneration if failed
+                // Restore the counter that was decremented
+                if (issueReported) {
+                    setIssueTries(prev => prev - 1);
+                } else {
+                    setRegenerationsLeft(prev => prev + 1);
+                }
             }
         } finally {
             setLoading(false);
@@ -362,15 +371,15 @@ export default function Home() {
                                 </button>
                                 <button
                                     onClick={(e) => generateIcon(e, true)}
-                                    disabled={regenerationsLeft <= 0 && !issueReported}
-                                    className={`flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all ${(regenerationsLeft > 0 || issueReported)
-                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    disabled={(regenerationsLeft <= 0 && !issueReported) || (issueReported && issueTries >= 5)}
+                                    className={`flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all ${(regenerationsLeft > 0 || (issueReported && issueTries < 5))
+                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                         }`}
                                 >
                                     <Sparkles size={18} />
                                     {issueReported
-                                        ? 'Try Again (Unlimited)'
+                                        ? `Try Again (${5 - issueTries} left)`
                                         : regenerationsLeft > 0
                                             ? `Try Again (${regenerationsLeft} left)`
                                             : 'No tries left'}
@@ -384,13 +393,13 @@ export default function Home() {
                                     }}
                                     className="w-full mt-3 flex items-center justify-center gap-2 bg-orange-500 text-white py-3 rounded-xl font-medium hover:bg-orange-600 transition-all"
                                 >
-                                    ⚠️ Report Issue (Wrong spelling/design? Get unlimited tries!)
+                                    ⚠️ Report Issue (Wrong spelling/design? Get 5 more tries!)
                                 </button>
                             )}
                             {issueReported && (
                                 <div className="mt-3 p-3 bg-orange-50 rounded-xl border border-orange-200 text-center">
                                     <p className="text-sm text-orange-700 font-medium">
-                                        🛠️ Issue mode active - Unlimited free regenerations until fixed!
+                                        🛠️ Issue mode active - {5 - issueTries} free regenerations remaining
                                     </p>
                                 </div>
                             )}
