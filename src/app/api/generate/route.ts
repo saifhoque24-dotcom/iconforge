@@ -148,18 +148,21 @@ Output: [/INST]`;
         try {
             if (isFlag || specificFlagMatch) {
                 console.log('Flag detected, prioritizing Pollinations.ai for accuracy');
-                // Priority 1 (Flags): Pollinations.ai
-                // Use the enhancedPrompt which now contains the EXACT description (if matched) or LLM output
-                const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?nologo=true`;
+                // Priority 1 (Flags): Pollinations.ai with high quality settings
+                const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=1024&height=1024&nologo=true&enhance=true`;
                 const pollRes = await fetch(pollinationsUrl);
                 if (!pollRes.ok) throw new Error('Pollinations.ai failed');
                 const pollBuffer = await pollRes.arrayBuffer();
                 response = new Blob([pollBuffer]);
             } else {
-                // Priority 1 (General): SDXL (Best Artistic Quality)
+                // Priority 1 (General): SDXL (Best Artistic Quality) with quality parameters
                 response = await client.textToImage({
                     model: 'stabilityai/stable-diffusion-xl-base-1.0',
                     inputs: enhancedPrompt,
+                    parameters: {
+                        guidance_scale: 7.5,
+                        num_inference_steps: 30,
+                    }
                 });
             }
         } catch (primaryError) {
@@ -188,8 +191,8 @@ Output: [/INST]`;
                         });
                     } catch (ojError) {
                         console.error('OpenJourney failed, using Pollinations.ai (Nuclear Option):', ojError);
-                        // Priority 5: Pollinations.ai (Guaranteed Fallback)
-                        const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?nologo=true`;
+                        // Priority 5: Pollinations.ai (Guaranteed Fallback) with high quality
+                        const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=1024&height=1024&nologo=true&enhance=true`;
                         const pollRes = await fetch(pollinationsUrl);
                         if (!pollRes.ok) throw new Error('Pollinations.ai failed');
                         const pollBuffer = await pollRes.arrayBuffer();
