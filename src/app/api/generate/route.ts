@@ -34,16 +34,17 @@ User Request: "${prompt}"
 
 CRITICAL RULES:
 1. PRESERVE EXACT DETAILS: If the user specifies a color, object, or style, you MUST include it exactly.
-2. NO HALLUCINATIONS: Do not add objects or concepts not implied by the user.
-3. ENHANCE QUALITY, NOT CONTENT: Add keywords like "high quality", "professional", "app icon" ONLY if they don't contradict the user.
-4. FORMAT: Output ONLY the raw prompt string. No "Here is the prompt" or quotes.
+2. INNOVATE & ELEVATE: Unless a specific style is requested, infuse the design with unique, modern, and innovative aesthetics (e.g., dynamic lighting, glassmorphism, abstract geometry). Make it stand out.
+3. NO HALLUCINATIONS: Do not add objects or concepts not implied by the user.
+4. ENHANCE QUALITY: Add keywords like "high quality", "professional", "app icon", "trend-setting".
+5. FORMAT: Output ONLY the raw prompt string.
 
 Examples:
 Input: "Red cat"
-Output: App icon, red cat, high quality, professional design, white background.
+Output: App icon, red cat, innovative geometric style, dynamic lighting, vibrant red, translucent glass elements, high quality, white background.
 
 Input: "3D gold coin for crypto app"
-Output: App icon, 3D gold coin, crypto theme, shiny, realistic lighting, high resolution, white background.
+Output: App icon, 3D gold coin, crypto theme, futuristic holographic details, shiny, realistic lighting, levitating effect, high resolution, white background.
 
 Input: "${prompt}"
 Output: [/INST]`;
@@ -53,7 +54,7 @@ Output: [/INST]`;
                 inputs: researchPrompt,
                 parameters: {
                     max_new_tokens: 150,
-                    temperature: 0.3, // Lower temperature for more deterministic/focused output
+                    temperature: 0.4, // Slightly higher for creativity
                     return_full_text: false,
                 }
             });
@@ -71,8 +72,8 @@ You are an expert prompt engineer.
 Refine the user's request into a Stable Diffusion XL prompt.
 CRITICAL RULES:
 1. PRESERVE EXACT DETAILS: If the user specifies a color, object, or style, you MUST include it exactly.
-2. NO HALLUCINATIONS: Do not add objects or concepts not implied by the user.
-3. ENHANCE QUALITY, NOT CONTENT: Add keywords like "high quality", "professional", "app icon" ONLY if they don't contradict the user.
+2. INNOVATE: Infuse the design with unique, modern, and creative aesthetics unless a specific style is requested.
+3. NO HALLUCINATIONS: Do not add objects or concepts not implied by the user.
 4. FORMAT: Output ONLY the raw prompt string.
 </s>
 <|user|>
