@@ -24,7 +24,7 @@ export default function Home() {
     const [hasEmail, setHasEmail] = useState(false);
     const [icons, setIcons] = useState<any[]>([]);
     const [showGallery, setShowGallery] = useState(false);
-    const [regenerationsLeft, setRegenerationsLeft] = useState(3);
+    const [regenerationsLeft, setRegenerationsLeft] = useState(1);
 
     useEffect(() => {
         // Load Revolut Checkout SDK
@@ -158,7 +158,7 @@ export default function Home() {
 
                 const creditData = await creditRes.json();
                 setCredits(creditData.credits);
-                setRegenerationsLeft(3); // Reset regenerations for new prompt
+                setRegenerationsLeft(1); // Reset to 1 regeneration for new prompt
             } else {
                 setRegenerationsLeft(prev => prev - 1); // Decrement for regeneration
             }
@@ -359,8 +359,8 @@ export default function Home() {
                                     onClick={(e) => generateIcon(e, true)}
                                     disabled={regenerationsLeft <= 0}
                                     className={`flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all ${regenerationsLeft > 0
-                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                         }`}
                                 >
                                     <Sparkles size={18} />
