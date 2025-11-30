@@ -113,12 +113,15 @@ Details: Polished, premium quality, production-ready icon design.`;
 
         try {
             if (isFlag) {
-                console.log('Flag detected, prioritizing FLUX for accuracy');
-                // Priority 1 (Flags): FLUX.1-schnell (Better at spatial adherence/geometry)
-                response = await client.textToImage({
-                    model: 'black-forest-labs/FLUX.1-schnell',
-                    inputs: enhancedPrompt,
-                });
+                console.log('Flag detected, prioritizing Pollinations.ai for accuracy');
+                // Priority 1 (Flags): Pollinations.ai (Often better at exact common entities)
+                // We also force a simpler prompt for flags to avoid 3D distortion
+                const flagPrompt = enhancedPrompt.replace('innovative', 'flat').replace('3D', '2D').replace('dynamic lighting', 'flat lighting');
+                const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(flagPrompt)}`;
+                const pollRes = await fetch(pollinationsUrl);
+                if (!pollRes.ok) throw new Error('Pollinations.ai failed');
+                const pollBuffer = await pollRes.arrayBuffer();
+                response = new Blob([pollBuffer]);
             } else {
                 // Priority 1 (General): SDXL (Best Artistic Quality)
                 response = await client.textToImage({
@@ -129,10 +132,9 @@ Details: Polished, premium quality, production-ready icon design.`;
         } catch (primaryError) {
             console.error('Primary model failed, trying fallback:', primaryError);
             try {
-                // Priority 2: Swap models based on what failed
-                const fallbackModel = isFlag ? 'stabilityai/stable-diffusion-xl-base-1.0' : 'black-forest-labs/FLUX.1-schnell';
+                // Priority 2: FLUX.1-schnell (Fast & Good Geometry)
                 response = await client.textToImage({
-                    model: fallbackModel,
+                    model: 'black-forest-labs/FLUX.1-schnell',
                     inputs: enhancedPrompt,
                 });
             } catch (secondaryError) {
